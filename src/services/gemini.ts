@@ -5,6 +5,10 @@ import { Bill } from '../types';
 const billSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
+    invoiceNumber: {
+      type: SchemaType.STRING,
+      description: "The invoice / bill number printed on the document (e.g. 'INV-001', 'FL/2025/123', 'Bill No: 45'). Extract the exact value as printed. Leave empty string if not found."
+    },
     company: { 
       type: SchemaType.STRING, 
       description: "Trading partner's company name. CRITICAL: If the invoice is issued BY 'Frank Link Logistics' (Sales), you MUST extract the buyer/customer name (from 'M/S :-', 'Bill To', 'Consignee', or 'Buyer' section). If the invoice is issued TO 'Frank Link Logistics' (Purchase), you MUST extract the seller/vendor name (from the top/letterhead). NEVER output 'Frank Link Logistics' or 'Frank Link' as the company name." 
@@ -37,7 +41,7 @@ const billSchema: Schema = {
       description: "A full, verbatim transcript/OCR of all text printed on this invoice/PDF, including all lines, numbers, headers, and descriptions." 
     }
   },
-  required: ["company", "gstin", "date", "billType", "netAmount", "cgstAmount", "sgstAmount", "igstAmount", "jwrAmount", "totalAmount"]
+  required: ["invoiceNumber", "company", "gstin", "date", "billType", "netAmount", "cgstAmount", "sgstAmount", "igstAmount", "jwrAmount", "totalAmount"]
 };
 
 // Known vendors list for direct correction match
@@ -184,6 +188,7 @@ function postProcessBill(parsed: any, ocrText: string): Omit<Bill, 'id' | 'synce
   }
 
   return {
+    invoiceNumber: (parsed.invoiceNumber || '').trim(),
     company: company.replace(/(?:^M\/S\s*[:-]?\s*)/i, '').trim(),
     gstin,
     date: parsed.date || todayFormatted(),

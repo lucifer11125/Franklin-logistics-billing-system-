@@ -1,5 +1,6 @@
 export interface Bill {
   id?: string; // e.g. "bill_1716500000000" or generated uuid
+  invoiceNumber?: string; // Invoice / Bill number printed on the document
   company: string;
   gstin: string;
   date: string; // DD.MM.YYYY

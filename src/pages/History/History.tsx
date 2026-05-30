@@ -40,7 +40,7 @@ export const History: React.FC<HistoryProps> = ({ settings, showToast }) => {
 
   const handleStartEdit = (bill: Bill) => {
     setEditingBillId(bill.id!);
-    setEditFormData({ company: bill.company, gstin: bill.gstin, date: bill.date, billType: bill.billType, netAmount: bill.netAmount, cgstAmount: bill.cgstAmount, sgstAmount: bill.sgstAmount, igstAmount: bill.igstAmount, jwrAmount: bill.jwrAmount, totalAmount: bill.totalAmount, processedAt: bill.processedAt });
+    setEditFormData({ invoiceNumber: bill.invoiceNumber || '', company: bill.company, gstin: bill.gstin, date: bill.date, billType: bill.billType, netAmount: bill.netAmount, cgstAmount: bill.cgstAmount, sgstAmount: bill.sgstAmount, igstAmount: bill.igstAmount, jwrAmount: bill.jwrAmount, totalAmount: bill.totalAmount, processedAt: bill.processedAt });
   };
 
   const handleCancelEdit = () => { setEditingBillId(null); setEditFormData(null); };
@@ -224,7 +224,14 @@ export const History: React.FC<HistoryProps> = ({ settings, showToast }) => {
                   {/* Company info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{b.company}</p>
-                    <p style={{ fontFamily: 'Space Mono', fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>{b.gstin || 'NO GSTIN'} · {b.date}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                      {b.invoiceNumber && (
+                        <span style={{ fontFamily: 'Space Mono', fontSize: 9, fontWeight: 700, color: 'var(--gold)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 4, padding: '1px 6px', letterSpacing: '0.05em' }}>
+                          #{b.invoiceNumber}
+                        </span>
+                      )}
+                      <p style={{ fontFamily: 'Space Mono', fontSize: 9, color: 'var(--text-muted)' }}>{b.gstin || 'NO GSTIN'} · {b.date}</p>
+                    </div>
                   </div>
 
                   {/* Amount + sync badge */}
@@ -256,6 +263,10 @@ export const History: React.FC<HistoryProps> = ({ settings, showToast }) => {
                               <option style={{ background: 'var(--navy-2)' }} value="PURCHASE">Purchase</option>
                               <option style={{ background: 'var(--navy-2)' }} value="SALES">Sales</option>
                             </select>
+                          </div>
+                          <div>
+                            <label className="field-label">Invoice Number</label>
+                            <input type="text" className="cs-input" style={{ fontFamily: 'Space Mono', textTransform: 'uppercase', fontSize: 12 }} value={(editFormData as any).invoiceNumber || ''} onChange={e => handleEditChange('invoiceNumber' as any, e.target.value.toUpperCase())} placeholder="e.g. INV-001" />
                           </div>
                           <div>
                             <label className="field-label">GSTIN</label>

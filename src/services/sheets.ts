@@ -184,9 +184,9 @@ async function writeSkeleton(sheetName: string, billDate: string, sheetsId: stri
     [`FOR THE MONTH OF ${monthName.toUpperCase()} ${year}`],
     [],
     ['SALES INVOICES (OUTGOING BILLS)'],
-    ['SR NO', 'PARTICULARS', 'GSTIN', 'Date', 'Non taxable', 'Net', 'IGST', 'CGST', 'SGST', 'TOTAL', 'Rate'],
+    ['INVOICE NO', 'PARTICULARS', 'GSTIN', 'Date', 'Non taxable', 'Net', 'IGST', 'CGST', 'SGST', 'TOTAL', 'Rate'],
     [],
-    [1, '', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', '', ''],
     ['', '', '', '', `=SUM(E8:E8)`, `=SUM(F8:F8)`, `=SUM(G8:G8)`, `=SUM(H8:H8)`, `=SUM(I8:I8)`, `=SUM(J8:J8)`, ''],
     [],
     [],
@@ -568,7 +568,9 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
     srNo = (targetInsertIdx - startIdx) + 1;
   }
 
-  rowData[0] = srNo;
+  rowData[0] = isSales
+    ? (bill.invoiceNumber && bill.invoiceNumber.trim() ? bill.invoiceNumber.trim() : srNo)
+    : srNo;
 
   if (!isPlaceholderEmpty) {
     await apiCall(':batchUpdate', {

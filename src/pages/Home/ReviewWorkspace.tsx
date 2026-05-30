@@ -121,6 +121,25 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({ file, extracte
               </div>
             </div>
 
+            {/* Invoice Number */}
+            <div>
+              <label className="field-label">Invoice Number</label>
+              <div style={{ position: 'relative' }}>
+                <span className="material-symbols-rounded" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--text-muted)', pointerEvents: 'none', fontVariationSettings: "'FILL' 0" }}>
+                  tag
+                </span>
+                <input
+                  type="text"
+                  className="cs-input"
+                  style={{ paddingLeft: 42, fontFamily: 'Space Mono', fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                  value={formData.invoiceNumber || ''}
+                  placeholder="e.g. INV-001 or FL/2025/123"
+                  onChange={e => handleChange('invoiceNumber', e.target.value.toUpperCase())}
+                />
+              </div>
+            </div>
+
+
             {/* GSTIN & Date */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
