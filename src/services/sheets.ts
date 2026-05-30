@@ -453,7 +453,12 @@ export async function sortAndResequenceSection(
   });
 
   cleanDataRows.forEach((row: any, index: number) => {
-    row[0] = index + 1;
+    // Preserve non-numeric invoice numbers (e.g. "INV-001", "FL/2025/42")
+    // Only assign sequential number if column A is empty or already a plain integer
+    const existingColA = String(row[0] || '').trim();
+    const isSequential = existingColA === '' || /^\d+$/.test(existingColA);
+    row[0] = isSequential ? (index + 1) : existingColA;
+
     if (row[4] !== undefined && row[4] !== "") row[4] = parseFloat(String(row[4])) || "";
     if (row[5] !== undefined && row[5] !== "") row[5] = parseFloat(String(row[5])) || 0;
     if (row[6] !== undefined && row[6] !== "") row[6] = parseFloat(String(row[6])) || "";
@@ -461,6 +466,7 @@ export async function sortAndResequenceSection(
     if (row[8] !== undefined && row[8] !== "") row[8] = parseFloat(String(row[8])) || "";
     if (row[9] !== undefined && row[9] !== "") row[9] = parseFloat(String(row[9])) || 0;
   });
+
 
   const writeValues = cleanDataRows.map((row: any) => {
     const fullRow = Array(11).fill("");
