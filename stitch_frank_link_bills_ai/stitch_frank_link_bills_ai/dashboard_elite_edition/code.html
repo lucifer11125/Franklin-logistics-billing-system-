@@ -1,0 +1,363 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Frank Link Bills - Logistics Dashboard</title>
+<!-- Tailwind CSS with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols (Thin stroke weight) -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..200,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#dde1ff",
+                    "on-background": "#e5e2e3",
+                    "background": "#0e0e0f",
+                    "surface-variant": "#353436",
+                    "tertiary-fixed-dim": "#ffb2b7",
+                    "on-secondary-fixed-variant": "#005236",
+                    "primary-container": "#2e5bff",
+                    "on-tertiary-fixed": "#40000d",
+                    "tertiary-container": "#d12348",
+                    "primary-fixed-dim": "#b8c3ff",
+                    "on-primary-fixed": "#001356",
+                    "on-primary": "#002388",
+                    "on-secondary": "#003824",
+                    "on-tertiary-container": "#ffebeb",
+                    "surface-dim": "#131314",
+                    "surface-container-highest": "#353436",
+                    "tertiary": "#ffb2b7",
+                    "surface-container": "#18181a",
+                    "on-primary-container": "#efefff",
+                    "on-tertiary": "#67001b",
+                    "surface-bright": "#3a393a",
+                    "outline-variant": "#434656",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#6ffbbe",
+                    "secondary": "#4edea3",
+                    "on-secondary-container": "#00311f",
+                    "secondary-fixed-dim": "#4edea3",
+                    "tertiary-fixed": "#ffdadb",
+                    "error": "#ffb4ab",
+                    "on-error-container": "#ffdad6",
+                    "secondary-container": "#00a572",
+                    "surface-tint": "#b8c3ff",
+                    "surface-container-high": "#222122",
+                    "on-secondary-fixed": "#002113",
+                    "inverse-primary": "#124af0",
+                    "surface": "#131314",
+                    "primary": "#b8c3ff",
+                    "on-tertiary-fixed-variant": "#92002a",
+                    "on-surface-variant": "#a2a2b0",
+                    "on-primary-fixed-variant": "#0035be",
+                    "inverse-surface": "#e5e2e3",
+                    "surface-container-low": "#161617",
+                    "on-surface": "#e5e2e3",
+                    "inverse-on-surface": "#313031",
+                    "outline": "#434656",
+                    "error-container": "#93000a",
+                    "surface-container-lowest": "#0e0e0f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.375rem",
+                    "lg": "0.75rem",
+                    "xl": "1.25rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "24px",
+                    "margin-desktop": "64px",
+                    "base": "12px",
+                    "gutter": "32px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "display-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600"}],
+                    "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["64px", {"lineHeight": "1.05", "letterSpacing": "-0.05em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "letterSpacing": "-0.03em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0e0e0f;
+            color: #e5e2e3;
+            -webkit-font-smoothing: antialiased;
+            background-image: url("https://www.transparenttextures.com/patterns/stardust.png"); /* Subtle noise texture */
+            background-attachment: fixed;
+        }
+
+        .glass-card {
+            background: rgba(24, 24, 26, 0.4);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 
+                0 4px 24px -1px rgba(0, 0, 0, 0.2),
+                inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(184, 195, 255, 0.15);
+            background: rgba(24, 24, 26, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 32px -4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .bespoke-button {
+            background: linear-gradient(135deg, #2e5bff 0%, #124af0 100%);
+            box-shadow: 0 4px 14px 0 rgba(46, 91, 255, 0.39);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bespoke-button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bespoke-button:hover::after {
+            opacity: 1;
+        }
+
+        .bespoke-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(46, 91, 255, 0.5);
+        }
+
+        .monospaced {
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em;
+        }
+
+        .pipeline-dot {
+            position: relative;
+        }
+        .pipeline-dot::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            border: 1px solid rgba(184, 195, 255, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .pipeline-item:hover .pipeline-dot::before {
+            opacity: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        
+        .nav-active {
+            color: #b8c3ff;
+            filter: drop-shadow(0 0 12px rgba(184, 195, 255, 0.4));
+        }
+
+        .chart-bar {
+            transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-32 md:pb-0 selection:bg-primary/30" style="background: radial-gradient(circle at 38.5938% 1.94049%, rgb(22, 22, 37) 0%, rgb(14, 14, 15) 70%), url(&quot;https://www.transparenttextures.com/patterns/stardust.png&quot;);">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0e0e0f]/60 backdrop-blur-2xl border-b border-white/5">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-6 max-w-container-max mx-auto">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface tracking-tighter">
+            Frank Link Logistics<span class="text-primary font-normal">&nbsp;Bills</span>
+</h1>
+<div class="flex items-center gap-8">
+<button class="flex items-center gap-2 group" title="Sync Status">
+<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform duration-700" style="font-variation-settings: 'wght' 200">cloud_sync</span>
+<span class="hidden md:inline font-label-sm text-primary uppercase">Connected</span>
+<span class="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse shadow-[0_0_12px_#4edea3]"></span>
+</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface transition-colors" style="font-variation-settings: 'wght' 200">account_circle</button>
+</div>
+</div>
+</header>
+<main class="pt-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto space-y-12 pb-24">
+<!-- Stats Grid (High Precision) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="glass-card rounded-xl p-8 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-on-surface-variant uppercase">Scanned Today</span>
+<span class="material-symbols-outlined text-primary/60 text-xl" style="font-variation-settings: 'wght' 200">scanner</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-lg text-headline-lg text-on-surface">05</p>
+<span class="text-secondary text-sm font-medium">+20% vs avg</span>
+</div>
+</div>
+<div class="glass-card rounded-xl p-8 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-on-surface-variant uppercase">Monthly Profit</span>
+<span class="material-symbols-outlined text-secondary/60 text-xl" style="font-variation-settings: 'wght' 200">payments</span>
+</div>
+<p class="font-headline-lg text-headline-lg text-on-surface monospaced">₹3,12,956</p>
+</div>
+<div class="glass-card rounded-xl p-8 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-on-surface-variant uppercase">Pending Sync</span>
+<span class="material-symbols-outlined text-error/60 text-xl" style="font-variation-settings: 'wght' 200">sync_problem</span>
+</div>
+<p class="font-headline-lg text-headline-lg text-on-surface">00</p>
+</div>
+</section>
+<!-- Main Action Zone -->
+<section class="relative h-[480px] md:h-[600px] rounded-2xl overflow-hidden glass-card group">
+<div class="absolute inset-0 z-0">
+<img alt="Logistics Aircraft" class="w-full h-full object-cover opacity-30 grayscale group-hover:grayscale-0 transition-all duration-1000 ease-in-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrfahwfr1cDPQSrhUVtqy5McopuemGqIOD7vrb10ECUW2CuQxmrYH35Bj7DWKSEEaVog7m3g4FZmWypEz75CT1pcwzRefJ3jKHdKR5mR5uPTW6YOzhZAiyw52NQEZ9ujOVfwSuQE39B2Vzsmn-zRU_BC0Z9qQYv8OjMTLvv4KLILWIoXowirEWuQvD3s-9vXZGZ-rV6pYkM5t8SNrEI8XWi_djsTYf-cq7cNnBgdRvQVP4AFpXk5uWP1YkY4v-8LUTwTA3M6RkK4Y">
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+</div>
+<div class="relative z-10 h-full flex flex-col items-center justify-center text-center px-12">
+<h2 class="font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface mb-6 max-w-3xl">
+                Precision Extraction for Logistics Invoices
+            </h2>
+<p class="text-on-surface-variant font-body-md mb-10 max-w-xl leading-relaxed">
+                Automate complex freight documentation with AI extraction, multi-currency validation, and real-time ledger synchronization.
+            </p>
+<button class="bespoke-button flex items-center gap-3 text-on-primary-container px-10 py-5 rounded-full font-semibold text-body-md shadow-2xl">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">photo_camera</span>
+                Select Document
+            </button>
+</div>
+</section>
+<!-- Bespoke Widgets Grid -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Automation Pipeline Widget -->
+<div class="lg:col-span-7 glass-card rounded-2xl p-10">
+<div class="flex items-center justify-between mb-10">
+<div>
+<h3 class="font-headline-lg-mobile text-on-surface mb-1">Automation Pipeline</h3>
+<p class="text-on-surface-variant font-label-sm uppercase">Active Sequence</p>
+</div>
+<div class="flex gap-2">
+<span class="w-2 h-2 rounded-full bg-primary/20"></span>
+<span class="w-2 h-2 rounded-full bg-primary/20"></span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+<div class="space-y-0 relative">
+<!-- Vertical Line -->
+<div class="absolute left-[19px] top-4 bottom-4 w-px bg-white/5"></div>
+<!-- Steps -->
+<div class="pipeline-item group flex items-start gap-8 pb-10 relative">
+<div class="pipeline-dot z-10 w-10 h-10 rounded-full bg-surface-container-high border border-primary/40 flex items-center justify-center text-primary font-code-md text-xs">01</div>
+<div class="flex-1">
+<p class="font-semibold text-on-surface mb-1 group-hover:text-primary transition-colors">Optical Capture</p>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-md">High-resolution sensing of freight documents via OCR edge engine.</p>
+</div>
+</div>
+<div class="pipeline-item group flex items-start gap-8 pb-10 relative">
+<div class="pipeline-dot z-10 w-10 h-10 rounded-full bg-surface-container-low border border-white/5 flex items-center justify-center text-on-surface-variant font-code-md text-xs">02</div>
+<div class="flex-1">
+<p class="font-semibold text-on-surface mb-1 group-hover:text-primary transition-colors">Raw Parsing</p>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-md">Encrypted client-side processing for instant string recognition.</p>
+</div>
+</div>
+<div class="pipeline-item group flex items-start gap-8 relative">
+<div class="pipeline-dot z-10 w-10 h-10 rounded-full bg-surface-container-low border border-white/5 flex items-center justify-center text-on-surface-variant font-code-md text-xs">03</div>
+<div class="flex-1">
+<p class="font-semibold text-on-surface mb-1 group-hover:text-primary transition-colors">Gemini LLM Extraction</p>
+<p class="text-on-surface-variant text-sm leading-relaxed max-w-md">Neural categorization of bill line items and complex tax structures.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Performance Monitor Widget -->
+<div class="lg:col-span-5 flex flex-col gap-gutter">
+<div class="glass-card rounded-2xl p-10 flex-1 flex flex-col justify-between overflow-hidden">
+<div>
+<div class="flex justify-between items-start mb-8">
+<div>
+<h3 class="font-headline-lg-mobile text-on-surface mb-1">Performance</h3>
+<p class="text-on-surface-variant font-label-sm uppercase">October Throughput</p>
+</div>
+<span class="material-symbols-outlined text-primary/40" style="font-variation-settings: 'wght' 200">monitoring</span>
+</div>
+<!-- Precise Custom Chart -->
+<div class="flex items-end gap-3 h-40 mb-10 px-2 border-b border-white/5">
+<div class="flex-1 bg-white/5 rounded-t-sm h-[40%] hover:bg-primary/20 transition-all duration-500"></div>
+<div class="flex-1 bg-white/5 rounded-t-sm h-[65%] hover:bg-primary/20 transition-all duration-500"></div>
+<div class="flex-1 bg-primary/40 rounded-t-sm h-[85%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">85%</div>
+</div>
+<div class="flex-1 bg-white/5 rounded-t-sm h-[50%] hover:bg-primary/20 transition-all duration-500"></div>
+<div class="flex-1 bg-primary rounded-t-sm h-full shadow-[0_0_20px_rgba(46,91,255,0.3)]"></div>
+<div class="flex-1 bg-white/5 rounded-t-sm h-[30%] hover:bg-primary/20 transition-all duration-500"></div>
+</div>
+</div>
+<div class="bg-primary/5 rounded-xl p-6 border border-primary/10 flex items-center justify-between">
+<div>
+<p class="font-label-sm text-primary mb-1">UPTIME RECORD</p>
+<span class="font-headline-lg text-headline-lg-mobile monospaced">99.82%</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'wght' 200">trending_up</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Refined Floating Design) -->
+<nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-2xl z-50">
+<div class="glass-card rounded-2xl h-20 flex justify-around items-center px-6">
+<a class="flex flex-col items-center gap-1 nav-active transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'wght' 300, 'FILL' 1">dashboard</span>
+<span class="font-label-sm uppercase">Status</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'wght' 200">history</span>
+<span class="font-label-sm uppercase">History</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'wght' 200">analytics</span>
+<span class="font-label-sm uppercase">Summary</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'wght' 200">settings</span>
+<span class="font-label-sm uppercase">Config</span>
+</a>
+</div>
+</nav>
+<script>
+    // Interactive mouse glow effect refined
+    document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.background = `radial-gradient(circle at ${x}% ${y}%, #161625 0%, #0e0e0f 70%), url("https://www.transparenttextures.com/patterns/stardust.png")`;
+    });
+</script>
+
+
+</body></html>

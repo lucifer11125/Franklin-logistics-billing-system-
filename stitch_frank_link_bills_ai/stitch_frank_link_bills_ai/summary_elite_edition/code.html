@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Operations Summary | Frank Link Bills</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #131314;
+            color: #e5e2e3;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .grain-texture {
+            position: relative;
+        }
+        .grain-texture::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            mix-blend-mode: overlay;
+        }
+        .chart-glow {
+            filter: drop-shadow(0 0 8px rgba(46, 91, 255, 0.3));
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container": "#201f20",
+                      "surface-container-low": "#1c1b1c",
+                      "surface-tint": "#b8c3ff",
+                      "inverse-surface": "#e5e2e3",
+                      "on-surface": "#e5e2e3",
+                      "surface-dim": "#131314",
+                      "on-tertiary-fixed-variant": "#92002a",
+                      "tertiary-fixed": "#ffdadb",
+                      "primary-fixed": "#dde1ff",
+                      "secondary-fixed-dim": "#4edea3",
+                      "on-primary-fixed-variant": "#0035be",
+                      "on-error": "#690005",
+                      "on-secondary-fixed-variant": "#005236",
+                      "surface-container-lowest": "#0e0e0f",
+                      "surface-variant": "#353436",
+                      "outline": "#8e90a2",
+                      "inverse-on-surface": "#313031",
+                      "tertiary": "#ffb2b7",
+                      "on-primary": "#002388",
+                      "secondary-fixed": "#6ffbbe",
+                      "surface": "#131314",
+                      "on-tertiary": "#67001b",
+                      "secondary-container": "#00a572",
+                      "on-primary-container": "#efefff",
+                      "on-background": "#e5e2e3",
+                      "error-container": "#93000a",
+                      "error": "#ffb4ab",
+                      "tertiary-fixed-dim": "#ffb2b7",
+                      "secondary": "#4edea3",
+                      "on-secondary-container": "#00311f",
+                      "surface-bright": "#3a393a",
+                      "on-secondary": "#003824",
+                      "primary-container": "#2e5bff",
+                      "on-tertiary-fixed": "#40000d",
+                      "on-secondary-fixed": "#002113",
+                      "on-surface-variant": "#c4c5d9",
+                      "background": "#131314",
+                      "surface-container-highest": "#353436",
+                      "primary": "#b8c3ff",
+                      "outline-variant": "#434656",
+                      "inverse-primary": "#124af0",
+                      "on-primary-fixed": "#001356",
+                      "on-tertiary-container": "#ffebeb",
+                      "surface-container-high": "#2a2a2b",
+                      "primary-fixed-dim": "#b8c3ff",
+                      "tertiary-container": "#d12348",
+                      "on-error-container": "#ffdad6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "gutter": "24px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "label-sm": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "code-md": ["JetBrains Mono"],
+                      "display-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen relative pb-32">
+<!-- Background Watermark Image -->
+<div class="fixed inset-0 z-0 overflow-hidden pointer-events-none opacity-20">
+<div class="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background z-10"></div>
+<img alt="Premium Logistics Context" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/ADBb0uhl3qkLnP9s2vq6aMrysf1h-hHx_BBnRch8_vXO8VlAnQ5uqbSLFnYcSvAlSckfSD6eF5RTX_FozIz5STIfvTlZORvh6dCNpn7PiAQ9SaTfowueVup-R93A9it61V4qtbsm4AEeBhzEveucqCRL1RmIVao_BbIV3vD4qlJRdu2p5BzBhI5rkRAUeIGgOkpB0rAK6s-Rz0Eo4eXDv77EqROmECOQRcLkvOm7J0kXGQWsWL4qNjucwhtxiOY"/>
+</div>
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16">
+<div class="flex items-center gap-2">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold tracking-tight text-on-surface">Frank Link Bills</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity p-2 active:scale-95">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity p-2 active:scale-95 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a senior logistics executive with silver-grey hair and glasses, wearing a dark navy blazer, set against a blurred high-tech control room background. The lighting is crisp and cool-toned to match a deep obsidian luxury dark mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJUzC4phjsy9i-uwIhS8ZsR9e9u6XOU0bVjAZrHHwBorv3k4if4LGWk7W3T53B-Kx53qXzvdAd81XDMsthnU5aCh_vQl_7AGg5KXqzmiECvFjfqT1t235Jh3hB2Rait2CZbh5s-tuVd9f2JSX1gNgygMTLS22w_O8iSWu6bvPvLMD5483vFM8uL26KqCKvg8XBhNj_Wmi2R8jDZkAtACmvlUjmaFfzZ5sVz1rBwNprKo0QS-UocwdUPaihXQeELo3NxKv-Ls8RXa0"/>
+</div>
+</div>
+</header>
+<main class="relative z-10 pt-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em]">Operations Hub</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mt-1">Operations Summary</h2>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-high px-4 py-2 rounded-xl border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-primary-container">calendar_month</span>
+<span class="font-body-md text-body-md font-medium">Oct 2023</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">expand_more</span>
+</div>
+</div>
+<!-- Section 1: Financial Overview -->
+<section class="mb-gutter">
+<div class="glass-card grain-texture rounded-2xl p-6 md:p-8">
+<div class="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-6 mb-8">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Total Processed Value</p>
+<h3 class="font-display-lg text-display-lg text-on-surface font-code-md">₹12,45,600</h3>
+<div class="flex items-center gap-2 mt-2">
+<span class="flex items-center text-secondary text-sm font-bold">
+<span class="material-symbols-outlined text-sm">arrow_upward</span> 14.2%
+                            </span>
+<span class="text-on-surface-variant/60 text-sm">vs last month</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1 rounded-lg bg-primary-container text-white text-xs font-bold">D</button>
+<button class="px-3 py-1 rounded-lg bg-white/5 text-on-surface-variant text-xs hover:bg-white/10">W</button>
+<button class="px-3 py-1 rounded-lg bg-white/5 text-on-surface-variant text-xs hover:bg-white/10">M</button>
+</div>
+</div>
+<!-- Line Chart Visualization -->
+<div class="w-full h-48 md:h-64 flex items-end gap-1 md:gap-2">
+<!-- Fake chart line using CSS heights and rounded tips -->
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[40%] transition-all hover:h-[45%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[55%] transition-all hover:h-[60%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[48%] transition-all hover:h-[53%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[70%] transition-all hover:h-[75%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-lg h-[85%] relative chart-glow transition-all hover:h-[90%]">
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full shadow-[0_0_10px_#b8c3ff]"></div>
+</div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[65%] transition-all hover:h-[70%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[50%] transition-all hover:h-[55%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[60%] transition-all hover:h-[65%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[75%] transition-all hover:h-[80%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[55%] transition-all hover:h-[60%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[40%] transition-all hover:h-[45%] hover:from-primary/20"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/5 to-primary/20 rounded-t-lg h-[65%] transition-all hover:h-[70%] hover:from-primary/20"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] text-on-surface-variant font-code-md uppercase tracking-wider opacity-60">
+<span>Oct 01</span>
+<span>Oct 08</span>
+<span>Oct 15</span>
+<span>Oct 22</span>
+<span>Oct 29</span>
+</div>
+</div>
+</section>
+<!-- Section 2: Distribution Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-gutter">
+<!-- Tax Breakdown -->
+<div class="glass-card grain-texture rounded-2xl p-6">
+<h4 class="font-label-sm text-label-sm text-on-surface-variant mb-6 uppercase tracking-wider">Tax Breakdown</h4>
+<div class="flex items-center gap-8">
+<!-- Minimalist Donut -->
+<div class="relative w-32 h-32 md:w-40 md:h-40 shrink-0">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#2e5bff" stroke-dasharray="251.2" stroke-dashoffset="100.48" stroke-width="12"></circle>
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#4edea3" stroke-dasharray="251.2" stroke-dashoffset="188.4" stroke-width="12"></circle>
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#ffb2b7" stroke-dasharray="251.2" stroke-dashoffset="226.08" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-[10px] font-bold opacity-60">TOTAL</span>
+<span class="font-code-md text-sm">₹1.8L</span>
+</div>
+</div>
+<div class="space-y-4 flex-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+<span class="text-sm font-medium">IGST</span>
+</div>
+<span class="font-code-md text-sm">60%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-sm font-medium">SGST</span>
+</div>
+<span class="font-code-md text-sm">25%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="text-sm font-medium">CGST</span>
+</div>
+<span class="font-code-md text-sm">15%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Category Split -->
+<div class="glass-card grain-texture rounded-2xl p-6">
+<h4 class="font-label-sm text-label-sm text-on-surface-variant mb-6 uppercase tracking-wider">Category Split</h4>
+<div class="space-y-8">
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-medium">Sales</span>
+<span class="font-code-md text-sm text-secondary">₹7,50,000</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 72%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-medium">Purchases</span>
+<span class="font-code-md text-sm text-primary">₹4,95,600</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 48%"></div>
+</div>
+</div>
+<div class="pt-2">
+<p class="text-[11px] text-on-surface-variant leading-relaxed opacity-60">Inventory acquisition costs increased by 8% this month due to transit surcharges from main maritime routes.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Efficiency Metrics -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="glass-card rounded-xl p-5 flex items-center gap-4 group cursor-pointer hover:bg-white/5 transition-colors">
+<div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest mb-0.5">AI Accuracy</p>
+<h5 class="text-xl font-code-md text-secondary">99.4%</h5>
+</div>
+</div>
+<div class="glass-card rounded-xl p-5 flex items-center gap-4 group cursor-pointer hover:bg-white/5 transition-colors">
+<div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20">
+<span class="material-symbols-outlined">speed</span>
+</div>
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest mb-0.5">Avg. Processing</p>
+<h5 class="text-xl font-code-md text-on-surface">1.2s</h5>
+</div>
+</div>
+<div class="glass-card rounded-xl p-5 flex items-center gap-4 group cursor-pointer hover:bg-white/5 transition-colors">
+<div class="w-12 h-12 rounded-lg bg-error-container/10 flex items-center justify-center text-error border border-error-container/20">
+<span class="material-symbols-outlined">rule</span>
+</div>
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest mb-0.5">Manual Overrides</p>
+<h5 class="text-xl font-code-md text-on-surface">2</h5>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-md rounded-xl overflow-hidden bg-surface-container/60 dark:bg-surface-container/60 backdrop-blur-2xl border border-white/10 shadow-[0_0_20px_rgba(46,91,255,0.15)] flex justify-around items-center py-3 px-4 z-50">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-container dark:text-primary-container font-bold relative after:content-[''] after:absolute after:-bottom-1 after:w-1 after:h-1 after:bg-primary-container after:rounded-full hover:bg-white/5 transition-colors active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-sm text-label-sm">Summary</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for glass cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+                
+                // Add a subtle spotlight effect
+                card.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(255,255,255,0.06), rgba(255,255,255,0.04))`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.background = 'rgba(255, 255, 255, 0.04)';
+            });
+        });
+    </script>
+</body></html>

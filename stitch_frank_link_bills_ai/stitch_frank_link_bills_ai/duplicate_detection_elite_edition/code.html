@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Frank Link Bills - Diagnostic Overlay</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#dde1ff",
+                    "on-background": "#e5e2e3",
+                    "background": "#131314",
+                    "surface-variant": "#353436",
+                    "tertiary-fixed-dim": "#ffb2b7",
+                    "on-secondary-fixed-variant": "#005236",
+                    "primary-container": "#2e5bff",
+                    "on-tertiary-fixed": "#40000d",
+                    "tertiary-container": "#d12348",
+                    "primary-fixed-dim": "#b8c3ff",
+                    "on-primary-fixed": "#001356",
+                    "on-primary": "#002388",
+                    "on-secondary": "#003824",
+                    "on-tertiary-container": "#ffebeb",
+                    "surface-dim": "#131314",
+                    "surface-container-highest": "#353436",
+                    "tertiary": "#ffb2b7",
+                    "surface-container": "#201f20",
+                    "on-primary-container": "#efefff",
+                    "on-tertiary": "#67001b",
+                    "surface-bright": "#3a393a",
+                    "outline-variant": "#434656",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#6ffbbe",
+                    "secondary": "#4edea3",
+                    "on-secondary-container": "#00311f",
+                    "secondary-fixed-dim": "#4edea3",
+                    "tertiary-fixed": "#ffdadb",
+                    "error": "#ffb4ab",
+                    "on-error-container": "#ffdad6",
+                    "secondary-container": "#00a572",
+                    "surface-tint": "#b8c3ff",
+                    "surface-container-high": "#2a2a2b",
+                    "on-secondary-fixed": "#002113",
+                    "inverse-primary": "#124af0",
+                    "surface": "#131314",
+                    "primary": "#b8c3ff",
+                    "on-tertiary-fixed-variant": "#92002a",
+                    "on-surface-variant": "#c4c5d9",
+                    "on-primary-fixed-variant": "#0035be",
+                    "inverse-surface": "#e5e2e3",
+                    "surface-container-low": "#1c1b1c",
+                    "on-surface": "#e5e2e3",
+                    "inverse-on-surface": "#313031",
+                    "outline": "#8e90a2",
+                    "error-container": "#93000a",
+                    "surface-container-lowest": "#0e0e0f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "display-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            backdrop-filter: blur(24px);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            pointer-events: none;
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .neon-glow-primary {
+            box-shadow: 0 0 25px rgba(46, 91, 255, 0.2);
+        }
+        .bloom-emerald {
+            box-shadow: 0 0 15px rgba(78, 222, 163, 0.25), inset 0 0 10px rgba(78, 222, 163, 0.1);
+        }
+        .diagnostic-line {
+            background: linear-gradient(90deg, transparent, rgba(184, 195, 255, 0.3), transparent);
+            height: 1px;
+            width: 100%;
+        }
+        body {
+            background-color: #131314;
+            color: #e5e2e3;
+        }
+        .custom-connector {
+            background: radial-gradient(circle, rgba(184, 195, 255, 0.2) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body class="antialiased font-body-md text-body-md overflow-hidden">
+<!-- Background Content -->
+<div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+<header class="fixed top-0 w-full flex justify-between items-center px-margin-mobile py-4 z-10">
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary tracking-tight">Frank Link Bills</span>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-primary">cloud_sync</span>
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</div>
+</header>
+<main class="pt-24 px-margin-mobile grid grid-cols-2 gap-4 opacity-20 grayscale blur-md">
+<div class="glass-card rounded-xl h-48 col-span-2 p-4"></div>
+<div class="glass-card rounded-xl h-32 p-4"></div>
+<div class="glass-card rounded-xl h-32 p-4"></div>
+<div class="glass-card rounded-xl h-64 col-span-2 p-4"></div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-margin-mobile">
+<!-- Scrim -->
+<div class="absolute inset-0 bg-background/70 backdrop-blur-2xl"></div>
+<!-- Modal Dialog -->
+<div class="relative w-full max-w-xl glass-card rounded-3xl overflow-hidden shadow-[0_32px_80px_-16px_rgba(0,0,0,0.9)] border-white/10 animate-in fade-in zoom-in duration-500">
+<!-- Scanline Animation effect -->
+<div class="absolute inset-0 overflow-hidden pointer-events-none">
+<div class="w-full h-[2px] bg-primary/20 absolute top-0 left-0 animate-[scan_3s_linear_infinite]"></div>
+</div>
+<div class="p-8 md:p-10">
+<!-- Header -->
+<div class="flex flex-col items-center text-center mb-10">
+<div class="relative mb-6">
+<div class="w-20 h-20 rounded-2xl bg-tertiary-container/10 flex items-center justify-center rotate-45 border border-tertiary/20">
+<span class="material-symbols-outlined text-tertiary text-4xl -rotate-45" style="font-variation-settings: 'FILL' 1;">privacy_tip</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-error border-2 border-background flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white font-bold">priority_high</span>
+</div>
+</div>
+<h2 class="font-display-lg text-[28px] leading-tight text-on-background mb-3 tracking-tight">Duplicate Conflict Detected</h2>
+<p class="text-on-surface-variant/80 font-body-md max-w-sm leading-relaxed">
+                        Cross-referencing engine detected a high-confidence match between a historical entry and your current scan.
+                    </p>
+</div>
+<!-- Comparison Section -->
+<div class="flex flex-col md:flex-row items-stretch gap-0 relative">
+<!-- Existing Card -->
+<div class="w-full flex-1 glass-card rounded-2xl p-6 border-white/5 bg-white/[0.01] transition-all hover:bg-white/[0.03]">
+<div class="flex items-center gap-2 mb-4 opacity-60">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40"></span>
+<span class="font-label-sm text-[10px] tracking-[0.15em] uppercase text-on-surface-variant">Historical Record</span>
+</div>
+<h3 class="font-semibold text-[16px] text-on-surface/90 mb-1">Pulsotronic India</h3>
+<div class="font-code-md text-[18px] text-on-surface-variant/70 mb-5">₹33,394.00</div>
+<div class="flex items-center gap-2 text-on-surface-variant/50 font-label-sm">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+<span>13.05.2026</span>
+</div>
+</div>
+<!-- Enhanced Center Element -->
+<div class="relative z-20 flex flex-row md:flex-col items-center justify-center py-4 md:py-0 md:px-2">
+<div class="w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent hidden md:block"></div>
+<div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent md:hidden"></div>
+<div class="custom-connector p-3 rounded-full border border-white/10 bg-surface-container-high shadow-2xl">
+<div class="bg-primary-container/20 rounded-full p-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-2xl md:rotate-0 rotate-90" style="font-variation-settings: 'wght' 500;">sync_alt</span>
+</div>
+</div>
+<div class="w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent hidden md:block"></div>
+<div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent md:hidden"></div>
+</div>
+<!-- New Scan Card -->
+<div class="w-full flex-1 glass-card rounded-2xl p-6 border-primary/30 bg-primary-container/5 shadow-[inset_0_0_20px_rgba(46,91,255,0.05)]">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-sm text-[10px] tracking-[0.15em] uppercase text-primary font-bold">New Assessment</span>
+</div>
+</div>
+<h3 class="font-bold text-[16px] text-on-surface mb-1">Pulsotronic India</h3>
+<div class="font-code-md text-[20px] text-primary-fixed-dim mb-5 drop-shadow-[0_0_8px_rgba(184,195,255,0.3)]">₹33,394.00</div>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-fixed-dim font-label-sm">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+<span>18.05.2026</span>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-12 flex flex-col sm:flex-row gap-4">
+<button class="group flex-1 px-8 py-4 rounded-2xl border border-white/10 text-on-surface-variant font-label-sm hover:text-error hover:border-error/40 hover:bg-error/5 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg opacity-60 group-hover:opacity-100">delete_sweep</span>
+                        Discard Scan
+                    </button>
+<button class="flex-1 px-8 py-4 rounded-2xl bg-secondary-container text-on-secondary-container font-semibold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] bloom-emerald shadow-lg flex items-center justify-center gap-2">
+<span>Yes, Keep both</span>
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Bottom border accent -->
+<div class="h-1.5 w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-50"></div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-md px-6 py-3 flex justify-around items-center glass-card rounded-3xl z-50 shadow-2xl border-white/10">
+<div class="flex flex-col items-center justify-center text-primary drop-shadow-[0_0_8px_rgba(184,195,255,0.3)] cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium mt-1">Status</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/40 cursor-pointer hover:text-on-surface-variant/80 transition-colors">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-medium mt-1">Logs</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/40 cursor-pointer hover:text-on-surface-variant/80 transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-medium mt-1">Data</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/40 cursor-pointer hover:text-on-surface-variant/80 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium mt-1">Config</span>
+</div>
+</nav>
+<style>
+        @keyframes scan {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(520px); opacity: 0; }
+        }
+    </style>
+<script>
+        // Micro-interaction for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.96)');
+            btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+            btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+        });
+
+        // Atmospheric parallax effect on background
+        document.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) / 150;
+            const moveY = (e.clientY - window.innerHeight / 2) / 150;
+            document.querySelector('main').style.transform = `translate(${moveX}px, ${moveY}px)`;
+        });
+    </script>
+</body></html>

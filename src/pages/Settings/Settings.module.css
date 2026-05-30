@@ -1,0 +1,241 @@
+.container {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.sectionHeader {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.settingField {
+  margin-bottom: 24px;
+}
+.settingField label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+}
+
+.inputField, .textareaField {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color var(--duration), background var(--duration);
+}
+.inputField:focus, .textareaField:focus {
+  outline: none;
+  border-color: rgba(46, 91, 255, 0.4);
+  background: rgba(46, 91, 255, 0.04);
+}
+
+.textareaField {
+  height: 120px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+
+.infoHelperCard {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  background: rgba(46, 91, 255, 0.06);
+  border: 1px solid rgba(46, 91, 255, 0.12);
+  border-radius: var(--radius-md);
+  margin: -8px 0 24px;
+}
+
+.shareEmailCard {
+  display: flex;
+  gap: 14px;
+  padding: 18px 24px;
+  background: rgba(78, 222, 163, 0.06);
+  border: 1px solid rgba(78, 222, 163, 0.12);
+  border-radius: var(--radius-md);
+  margin-top: 20px;
+}
+.emailCode {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  user-select: all;
+  margin-top: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  height: 44px;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
+.importSaBtn {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid rgba(46, 91, 255, 0.2);
+  font-size: 11px;
+  padding: 0 12px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+}
+.importSaBtn:hover {
+  background: rgba(46, 91, 255, 0.06);
+}
+
+.testBtnRow {
+  display: flex;
+  gap: 16px;
+  margin-top: 28px;
+}
+.outlineBtn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.outlineBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.outlineBtn span[class*="material-symbols-rounded"] {
+  font-size: 18px;
+}
+.outlineBtn:disabled {
+  opacity: 0.4;
+}
+.outlineBtn span[style*="rotate"] {
+  animation: rotate-spinner 2s linear infinite;
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.switchRow:last-child {
+  border-bottom: none;
+}
+
+/* Toggle Switch layout */
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggleTrack {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background var(--duration), box-shadow var(--duration);
+}
+.toggleTrack::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  top: 3px;
+  left: 3px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration) var(--ease-out);
+}
+.toggle input:checked + .toggleTrack {
+  background: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+.toggle input:checked + .toggleTrack::after {
+  transform: translateX(22px);
+}
+
+.operationColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.demoBtn {
+  background: rgba(78, 222, 163, 0.08);
+  color: var(--secondary);
+  border: 1px solid rgba(78, 222, 163, 0.15);
+  padding: 16px 20px;
+  height: auto;
+  justify-content: flex-start;
+}
+.demoBtn:hover {
+  background: rgba(78, 222, 163, 0.15);
+  box-shadow: 0 4px 16px rgba(78, 222, 163, 0.08);
+}
+
+.wipeBtn {
+  background: rgba(198, 40, 40, 0.08);
+  color: var(--accent-danger);
+  border: 1px solid rgba(198, 40, 40, 0.15);
+  padding: 16px 20px;
+  height: auto;
+  justify-content: flex-start;
+}
+.wipeBtn:hover {
+  background: rgba(198, 40, 40, 0.15);
+  box-shadow: 0 4px 16px rgba(198, 40, 40, 0.08);
+}
+
+.saveConfigBtn {
+  width: 100%;
+  height: 54px;
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 6px 20px var(--primary-glow);
+  margin-top: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  animation: save-glow 3s ease-in-out infinite;
+}
+.saveConfigBtn:hover {
+  box-shadow: 0 8px 28px rgba(46, 91, 255, 0.45);
+}
+
+@keyframes rotate-spinner {
+  to { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

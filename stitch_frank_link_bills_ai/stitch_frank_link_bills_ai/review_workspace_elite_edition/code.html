@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Review Workspace | Frank Link Bills</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#dde1ff",
+                        "on-background": "#e5e2e3",
+                        "background": "#131314",
+                        "surface-variant": "#353436",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "on-secondary-fixed-variant": "#005236",
+                        "primary-container": "#2e5bff",
+                        "on-tertiary-fixed": "#40000d",
+                        "tertiary-container": "#d12348",
+                        "primary-fixed-dim": "#b8c3ff",
+                        "on-primary-fixed": "#001356",
+                        "on-primary": "#002388",
+                        "on-secondary": "#003824",
+                        "on-tertiary-container": "#ffebeb",
+                        "surface-dim": "#131314",
+                        "surface-container-highest": "#353436",
+                        "tertiary": "#ffb2b7",
+                        "surface-container": "#201f20",
+                        "on-primary-container": "#efefff",
+                        "on-tertiary": "#67001b",
+                        "surface-bright": "#3a393a",
+                        "outline-variant": "#434656",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#6ffbbe",
+                        "secondary": "#4edea3",
+                        "on-secondary-container": "#00311f",
+                        "secondary-fixed-dim": "#4edea3",
+                        "tertiary-fixed": "#ffdadb",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#00a572",
+                        "surface-tint": "#b8c3ff",
+                        "surface-container-high": "#2a2a2b",
+                        "on-secondary-fixed": "#002113",
+                        "inverse-primary": "#124af0",
+                        "surface": "#131314",
+                        "primary": "#b8c3ff",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "on-surface-variant": "#c4c5d9",
+                        "on-primary-fixed-variant": "#0035be",
+                        "inverse-surface": "#e5e2e3",
+                        "surface-container-low": "#1c1b1c",
+                        "on-surface": "#e5e2e3",
+                        "inverse-on-surface": "#313031",
+                        "outline": "#8e90a2",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#0e0e0f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border 0.3s ease;
+        }
+        .premium-border {
+            position: relative;
+        }
+        .premium-border::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            padding: 1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.08) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .glow-primary {
+            box-shadow: 0 0 20px rgba(184, 195, 255, 0.1);
+        }
+        .glow-status {
+            box-shadow: inset 0 0 12px rgba(78, 222, 163, 0.05), 0 0 20px rgba(78, 222, 163, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        input:focus {
+            outline: none;
+        }
+        .minimal-input {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .minimal-input:focus {
+            border-bottom-color: #b8c3ff;
+            background: rgba(184, 195, 255, 0.03);
+        }
+        .preview-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .preview-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .preview-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+        .technical-label {
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(229, 226, 227, 0.5);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden selection:bg-primary/30">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-md border-b border-[#ffffff08]">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-background text-[20px] font-bold">account_balance_wallet</span>
+</div>
+<div class="font-headline-lg text-[22px] font-bold text-on-surface tracking-tight">Frank Link Bills</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="hidden md:flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-white/5">
+<div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">System Active</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<div class="h-8 w-[1px] bg-white/10"></div>
+<button class="flex items-center gap-2 group">
+<span class="text-label-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Admin</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center text-primary material-symbols-outlined text-[18px]">person</div>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-28 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-screen flex flex-col">
+<div class="flex flex-col md:flex-row gap-gutter flex-grow overflow-hidden">
+<!-- Left Pane: Document Preview -->
+<section class="w-full md:w-5/12 flex flex-col gap-6 overflow-hidden h-full">
+<div class="flex items-center justify-between px-1">
+<div class="flex flex-col">
+<h2 class="text-[20px] font-semibold text-on-surface">Document Source</h2>
+<p class="text-label-sm text-on-surface-variant">INV-2026-02-09-VLY</p>
+</div>
+<span class="bg-secondary-container/10 text-secondary border border-secondary/20 px-3 py-1.5 text-label-sm rounded-lg flex items-center gap-2 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+                    SECURE PDF
+                </span>
+</div>
+<div class="premium-border glass-card rounded-2xl flex-grow overflow-y-auto preview-scroll p-8 relative group bg-surface-container-lowest/40">
+<div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+<img alt="Freight Invoice" class="w-full h-auto rounded shadow-2xl opacity-90 group-hover:opacity-100 transition-opacity duration-700" data-alt="A high-contrast, professional close-up of a detailed freight invoice document lying on a dark glass desk. The paper features crisp black typography with clear sections for billing details, logistics codes, and currency markers. The lighting is dramatic, casting soft blue and deep obsidian shadows that reflect the high-performance, technical brand identity of a logistics automation system. The aesthetic is sharp, clean, and authoritative, emphasizing precision and financial clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFbyOFwTjud0J0e15RIyg6yLkA2gQMZG0aqom48EG3axu2yEdiDTg05TyqZKP5cNgJ9kEnLsT1S_yg7eXrbgSRGcSh66tR0fSRxZ_afKRt6cCr8lOlxgqiqu9Hn4Srg9uC4oCMr-m6dFWKizuYDPwBeTcj3ooMRw8RBzbh_DUrtRUgiLs-A-C9GCJxW0rnCijI91MtMpXFvtoeNriBQ7Y07bekjxC-qfI5-2dpKujNF8VxcSm7Zdmxs9Iv5s42KfqZN-ptEwvLhYE"/>
+<div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="bg-surface/80 backdrop-blur-xl p-2 rounded-full border border-white/10 hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Right Pane: Verification Form -->
+<section class="w-full md:w-7/12 flex flex-col gap-6 overflow-y-auto preview-scroll h-full">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-[20px] font-semibold text-on-surface">Data Verification</h2>
+<!-- Status Readout (Integrated) -->
+<div class="flex items-center gap-3 bg-secondary/5 border border-secondary/10 px-4 py-2 rounded-full glow-status">
+<div class="relative">
+<span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="absolute inset-0 bg-secondary/20 blur-sm rounded-full"></div>
+</div>
+<span class="text-[11px] font-bold text-secondary uppercase tracking-widest">Logic Verified</span>
+</div>
+</div>
+<div class="premium-border glass-card rounded-2xl p-8 flex flex-col gap-10 bg-surface-container-low/20">
+<div class="grid grid-cols-1 gap-10">
+<!-- Trading Company (Readonly Premium) -->
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">Origin Entity</label>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-[20px]">corporate_fare</span>
+<input class="w-full bg-transparent border-none p-0 text-[18px] text-primary-fixed-dim font-semibold focus:ring-0 cursor-default" readonly="" type="text" value="VIRYA LOGISTICS TECHNOLOGIES PVT LTD"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-12">
+<!-- GSTIN -->
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">GSTIN of Partner</label>
+<input class="minimal-input py-2 font-code-md text-code-md text-on-surface uppercase tracking-wider focus:ring-0" type="text" value="27AAICV0508K1Z7"/>
+</div>
+<!-- Invoice Date -->
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">Issue Date</label>
+<div class="relative">
+<input class="minimal-input w-full py-2 text-on-surface focus:ring-0" type="text" value="09.02.2026"/>
+<span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-[18px]">calendar_today</span>
+</div>
+</div>
+</div>
+<!-- Category -->
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">Transaction Category</label>
+<div class="relative">
+<select class="minimal-input w-full py-2 text-on-surface focus:ring-0 appearance-none border-t-0 border-x-0 rounded-none cursor-pointer">
+<option value="SALES">SALES OPERATIONS</option>
+<option value="PURCHASE">PURCHASE PROCUREMENT</option>
+</select>
+<span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Numeric Inputs Grid - Professional Precision -->
+<div class="grid grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10 pt-4 border-t border-white/5">
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">Net Base (₹)</label>
+<input class="minimal-input py-2 font-code-md text-on-surface text-right tracking-tight" type="text" value="52,055.00"/>
+</div>
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">CGST (₹)</label>
+<input class="minimal-input py-2 font-code-md text-on-surface text-right tracking-tight" type="text" value="4,685.00"/>
+</div>
+<div class="flex flex-col gap-3 group">
+<label class="technical-label group-focus-within:text-primary transition-colors">SGST (₹)</label>
+<input class="minimal-input py-2 font-code-md text-on-surface text-right tracking-tight" type="text" value="4,685.00"/>
+</div>
+<div class="flex flex-col gap-3 group opacity-60 hover:opacity-100 transition-opacity">
+<label class="technical-label group-focus-within:text-primary transition-colors">IGST (₹)</label>
+<input class="minimal-input py-2 font-code-md text-on-surface-variant/60 text-right" type="text" value="0.00"/>
+</div>
+<div class="flex flex-col gap-3 group opacity-60 hover:opacity-100 transition-opacity">
+<label class="technical-label group-focus-within:text-primary transition-colors">Freight/JWR (₹)</label>
+<input class="minimal-input py-2 font-code-md text-on-surface-variant/60 text-right" type="text" value="0.00"/>
+</div>
+<div class="flex flex-col gap-3">
+<label class="technical-label text-primary brightness-125">Grand Total (₹)</label>
+<div class="relative">
+<div class="absolute -inset-2 bg-primary/5 blur-lg rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+<input class="w-full bg-primary/5 border-b-2 border-primary/40 py-3 font-code-md text-[18px] text-primary font-bold text-right tracking-tighter glow-primary rounded-t-sm" type="text" value="61,425.00"/>
+<div class="absolute top-1/2 -right-2 w-1.5 h-1.5 bg-primary rounded-full -translate-y-1/2"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-6 pt-6 mt-4">
+<button class="px-8 py-4 text-on-surface-variant/60 hover:text-error hover:bg-error/5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[20px]">delete_sweep</span>
+                        Discard
+                    </button>
+<button class="flex-1 bg-primary text-on-primary rounded-xl py-4 font-bold flex items-center justify-center gap-3 hover:brightness-110 transition-all active:scale-[0.98] duration-200 shadow-xl shadow-primary/10 group">
+<span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500" style="font-variation-settings: 'FILL' 1;">sync</span>
+                        Commit Changes
+                    </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="fixed bottom-4 left-4 right-4 px-6 flex justify-around items-center h-16 bg-surface-container/30 backdrop-blur-3xl border border-white/10 rounded-2xl z-50 md:hidden shadow-2xl">
+<div class="flex flex-col items-center text-on-surface-variant/40">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+</div>
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">history</span>
+</div>
+<div class="flex flex-col items-center text-on-surface-variant/40">
+<span class="material-symbols-outlined text-[22px]">analytics</span>
+</div>
+<div class="flex flex-col items-center text-on-surface-variant/40">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+</div>
+</nav>
+<!-- Desktop Toolbar Navigation -->
+<div class="hidden md:flex fixed bottom-10 left-1/2 -translate-x-1/2 bg-surface-container-low/40 backdrop-blur-2xl border border-white/5 rounded-full px-2 py-2 items-center gap-2 z-50 shadow-2xl premium-border">
+<button class="flex items-center gap-3 px-6 py-2.5 rounded-full text-on-surface-variant/60 hover:text-on-surface hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-[11px] font-bold uppercase tracking-widest">Dash</span>
+</button>
+<button class="flex items-center gap-3 px-6 py-2.5 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-inner">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="text-[11px] font-bold uppercase tracking-widest">Logs</span>
+</button>
+<button class="flex items-center gap-3 px-6 py-2.5 rounded-full text-on-surface-variant/60 hover:text-on-surface hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+<span class="text-[11px] font-bold uppercase tracking-widest">Audit</span>
+</button>
+<div class="w-[1px] h-6 bg-white/10 mx-2"></div>
+<button class="p-2.5 rounded-full text-on-surface-variant/60 hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+<script>
+    // Micro-interactions for form focus states
+    document.querySelectorAll('.minimal-input, select').forEach(input => {
+        input.addEventListener('focus', () => {
+            input.closest('.group')?.querySelector('label')?.classList.add('text-primary');
+        });
+        input.addEventListener('blur', () => {
+            input.closest('.group')?.querySelector('label')?.classList.remove('text-primary');
+        });
+    });
+
+    // Subtle atmospheric cursor effect
+    const glow = document.createElement('div');
+    glow.className = 'fixed w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-[120px] pointer-events-none z-[-1] transition-opacity duration-1000';
+    document.body.appendChild(glow);
+
+    document.addEventListener('mousemove', (e) => {
+        glow.style.left = `${e.clientX - 250}px`;
+        glow.style.top = `${e.clientY - 250}px`;
+    });
+</script>
+</body></html>
