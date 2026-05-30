@@ -121,19 +121,49 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({ file, extracte
               </div>
             </div>
 
-            {/* Invoice Number */}
+            {/* Invoice Number — highlighted, warns if blank on Sales bill */}
             <div>
-              <label className="field-label">Invoice Number</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label className="field-label" style={{ marginBottom: 0, color: formData.billType === 'SALES' && !formData.invoiceNumber ? '#fb7185' : 'var(--text-muted)' }}>
+                  Invoice Number {formData.billType === 'SALES' && <span style={{ color: '#fb7185' }}>*</span>}
+                </label>
+                {formData.billType === 'SALES' && !formData.invoiceNumber && (
+                  <span style={{ fontSize: 9, fontWeight: 700, color: '#fb7185', fontFamily: 'Space Grotesk', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    ⚠ Required for Sheet column A
+                  </span>
+                )}
+                {formData.invoiceNumber && (
+                  <span style={{ fontSize: 9, fontWeight: 700, color: '#34d399', fontFamily: 'Space Grotesk', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    ✓ AI Extracted
+                  </span>
+                )}
+              </div>
               <div style={{ position: 'relative' }}>
-                <span className="material-symbols-rounded" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--text-muted)', pointerEvents: 'none', fontVariationSettings: "'FILL' 0" }}>
+                <span className="material-symbols-rounded" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: formData.invoiceNumber ? 'var(--gold)' : 'var(--text-muted)', pointerEvents: 'none', fontVariationSettings: "'FILL' 0" }}>
                   tag
                 </span>
                 <input
                   type="text"
                   className="cs-input"
-                  style={{ paddingLeft: 42, fontFamily: 'Space Mono', fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                  style={{
+                    paddingLeft: 42,
+                    fontFamily: 'Space Mono',
+                    fontSize: 12,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    borderColor: formData.billType === 'SALES' && !formData.invoiceNumber
+                      ? 'rgba(244,63,94,0.4)'
+                      : formData.invoiceNumber
+                        ? 'rgba(245,158,11,0.4)'
+                        : undefined,
+                    background: formData.billType === 'SALES' && !formData.invoiceNumber
+                      ? 'rgba(244,63,94,0.04)'
+                      : formData.invoiceNumber
+                        ? 'rgba(245,158,11,0.04)'
+                        : undefined,
+                  }}
                   value={formData.invoiceNumber || ''}
-                  placeholder="e.g. INV-001 or FL/2025/123"
+                  placeholder={formData.billType === 'SALES' ? 'Type invoice number from bill (e.g. FL/2025/42)' : 'Optional — invoice/bill number'}
                   onChange={e => handleChange('invoiceNumber', e.target.value.toUpperCase())}
                 />
               </div>

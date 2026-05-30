@@ -187,6 +187,9 @@ function postProcessBill(parsed: any, ocrText: string): Omit<Bill, 'id' | 'synce
     total = recalculatedTotal;
   }
 
+  // Debug: log what the AI returned for invoice number
+  console.log('[Gemini] invoiceNumber extracted:', JSON.stringify(parsed.invoiceNumber), '| final:', (parsed.invoiceNumber || '').trim() || '(empty)');
+
   return {
     invoiceNumber: (parsed.invoiceNumber || '').trim(),
     company: company.replace(/(?:^M\/S\s*[:-]?\s*)/i, '').trim(),
