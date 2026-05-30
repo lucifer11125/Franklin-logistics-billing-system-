@@ -9,7 +9,12 @@ export class FrankLinkDatabase extends Dexie {
     this.version(1).stores({
       bills: 'id, company, gstin, date, billType, syncedToSheets, processedAt'
     });
+    // v2: added invoiceNumber field
+    this.version(2).stores({
+      bills: 'id, invoiceNumber, company, gstin, date, billType, syncedToSheets, processedAt'
+    });
   }
+
 
   // Generate custom compatible legacy-style string ID
   generateId(): string {

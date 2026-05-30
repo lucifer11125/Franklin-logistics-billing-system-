@@ -510,7 +510,10 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   let valRes = await apiCall(`/values/${encodeURIComponent(sheetName)}!A1:K300?valueRenderOption=FORMULA`, {}, sheetsId, saJson, apiKey);
   let rows = valRes.values || [];
 
-  if (rows.length < 6 || !rows[5] || rows[5][0] !== 'SR NO') {
+  // Accept both legacy 'SR NO' and new 'INVOICE NO' headers so existing sheets don't get rewritten
+  const row5Col0 = rows[5] ? String(rows[5][0] || '').trim().toUpperCase() : '';
+  const skeletonIsValid = rows.length >= 6 && (row5Col0 === 'SR NO' || row5Col0 === 'INVOICE NO');
+  if (!skeletonIsValid) {
     await writeSkeleton(sheetName, bill.date, sheetsId, saJson, apiKey);
     const reValRes = await apiCall(`/values/${encodeURIComponent(sheetName)}!A1:K300?valueRenderOption=FORMULA`, {}, sheetsId, saJson, apiKey);
     rows = reValRes.values || [];
