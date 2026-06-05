@@ -618,16 +618,17 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   const finalRows = finalRes.values || [];
   const finalLayout = parseSheetLayout(finalRows);
 
-  if (finalLayout.salesTotalIdx !== -1) {
-    const endSalesRow = finalLayout.salesTotalIdx;
+  if (finalLayout.salesTotalIdx !== -1 && finalLayout.salesStartIdx !== -1) {
+    const salesStartRow = finalLayout.salesStartIdx + 1; // 1-indexed first data row
+    const endSalesRow = finalLayout.salesTotalIdx;        // 1-indexed total row (0-idx + 1)
     const salesTotalRange = `${sheetName}!E${finalLayout.salesTotalIdx + 1}:J${finalLayout.salesTotalIdx + 1}`;
     const salesTotalFormulas = [
-      `=SUM(E8:E${endSalesRow})`,
-      `=SUM(F8:F${endSalesRow})`,
-      `=SUM(G8:G${endSalesRow})`,
-      `=SUM(H8:H${endSalesRow})`,
-      `=SUM(I8:I${endSalesRow})`,
-      `=SUM(J8:J${endSalesRow})`
+      `=SUM(E${salesStartRow}:E${endSalesRow})`,
+      `=SUM(F${salesStartRow}:F${endSalesRow})`,
+      `=SUM(G${salesStartRow}:G${endSalesRow})`,
+      `=SUM(H${salesStartRow}:H${endSalesRow})`,
+      `=SUM(I${salesStartRow}:I${endSalesRow})`,
+      `=SUM(J${salesStartRow}:J${endSalesRow})`
     ];
     await apiCall(`/values/${encodeURIComponent(salesTotalRange)}?valueInputOption=USER_ENTERED`, {
       method: 'PUT',
@@ -806,16 +807,17 @@ export async function deleteBillFromSheets(bill: Bill, sheetsId: string, saJson:
   const finalRows = finalRes.values || [];
   const finalLayout = parseSheetLayout(finalRows);
 
-  if (finalLayout.salesTotalIdx !== -1) {
+  if (finalLayout.salesTotalIdx !== -1 && finalLayout.salesStartIdx !== -1) {
+    const salesStartRow = finalLayout.salesStartIdx + 1;
     const endSalesRow = finalLayout.salesTotalIdx;
     const salesTotalRange = `${sheetName}!E${finalLayout.salesTotalIdx + 1}:J${finalLayout.salesTotalIdx + 1}`;
     const salesTotalFormulas = [
-      `=SUM(E8:E${endSalesRow})`,
-      `=SUM(F8:F${endSalesRow})`,
-      `=SUM(G8:G${endSalesRow})`,
-      `=SUM(H8:H${endSalesRow})`,
-      `=SUM(I8:I${endSalesRow})`,
-      `=SUM(J8:J${endSalesRow})`
+      `=SUM(E${salesStartRow}:E${endSalesRow})`,
+      `=SUM(F${salesStartRow}:F${endSalesRow})`,
+      `=SUM(G${salesStartRow}:G${endSalesRow})`,
+      `=SUM(H${salesStartRow}:H${endSalesRow})`,
+      `=SUM(I${salesStartRow}:I${endSalesRow})`,
+      `=SUM(J${salesStartRow}:J${endSalesRow})`
     ];
     await apiCall(`/values/${encodeURIComponent(salesTotalRange)}?valueInputOption=USER_ENTERED`, {
       method: 'PUT',

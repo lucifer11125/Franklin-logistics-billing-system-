@@ -27,9 +27,10 @@ export class FrankLinkDatabase extends Dexie {
     return list.sort((a, b) => new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime());
   }
 
-  // Get unsynced bills
+  // Get unsynced bills (filter in-memory — IndexedDB doesn't coerce boolean false to 0)
   async getUnsyncedBills(): Promise<Bill[]> {
-    return this.bills.where('syncedToSheets').equals(0).toArray(); // Dexie queries are indexed, but booleans are stored as 0/1 or true/false depending on IndexedDB. To be safe, let's query all and filter, or query directly.
+    const all = await this.bills.toArray();
+    return all.filter(b => !b.syncedToSheets);
   }
 
   // Unified save/insert

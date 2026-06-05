@@ -100,7 +100,10 @@ export const History: React.FC<HistoryProps> = ({ settings, showToast }) => {
     if (isSyncingAll || !navigator.onLine) return;
     setIsSyncingAll(true);
     try {
-      const unsynced = bills.filter(b => !b.syncedToSheets);
+      // Always fetch ALL unsynced bills from DB — not just the currently-filtered view.
+      // This prevents purchase bills from being skipped when the Sales filter is active.
+      const allBills = await db.getAllBills();
+      const unsynced = allBills.filter(b => !b.syncedToSheets);
       if (!unsynced.length) { showToast('No pending records.', 'info'); return; }
       if (!settings.sheetsId) { showToast('Sheet ID missing.', 'error'); return; }
       const count = await syncPending(unsynced, settings.sheetsId, settings.serviceAccountJson, settings.sheetsApiKey || settings.geminiApiKey);
