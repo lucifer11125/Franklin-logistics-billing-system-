@@ -541,11 +541,12 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   }
 
   // Guard: if layout detection failed, bail out with a clear error instead of
-  // writing data to a garbage row (row 0 / outside the table)
-  if (startIdx === -1 || totalIdx === -1) {
+  // writing data to a garbage row (outside the table).
+  // Use `< 0` not `=== -1` so any negative value is caught.
+  if (startIdx < 0 || totalIdx < 0 || totalIdx <= startIdx) {
     throw new Error(
       `Could not detect the ${isSales ? 'sales' : 'purchase'} section boundaries in sheet "${sheetName}". ` +
-      `The sheet structure may be corrupted. Please check the Google Sheet and try again.`
+      `The sheet structure may be corrupted. Please re-open the sheet and try again.`
     );
   }
 
@@ -591,6 +592,14 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
     : srNo;
 
   if (!isPlaceholderEmpty) {
+    // Last-resort safety check before the API call — a negative index causes a
+    // hard 400 error from Google Sheets that is very confusing to users.
+    if (targetInsertIdx < 0) {
+      throw new Error(
+        `Cannot insert row: computed position ${targetInsertIdx} is invalid for sheet "${sheetName}". ` +
+        `Please try again or delete the bill and re-scan.`
+      );
+    }
     await apiCall(':batchUpdate', {
       method: 'POST',
       body: JSON.stringify({
@@ -602,7 +611,8 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
               startIndex: targetInsertIdx,
               endIndex: targetInsertIdx + 1
             },
-            inheritFromBefore: true
+            // Use false so inserting at index 0 never fails (no prior row to inherit from)
+            inheritFromBefore: targetInsertIdx > 0
           }
         }]
       })
