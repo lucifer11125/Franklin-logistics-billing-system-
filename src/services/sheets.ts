@@ -496,7 +496,31 @@ export async function sortAndResequenceSection(
   }, sheetsId, saJson, apiKey);
 }
 
-/* ── Append Invoice Row with Dynamic Layout Parsing ────────────────────── */
+/**
+ * When the SUM formula row cannot be found (it may have been displaced or
+ * accidentally overwritten), estimate its 0-based index by scanning for the
+ * last non-empty data row in the section and placing the total right after it.
+ * Returns the original totalIdx unchanged if it is already valid.
+ */
+function resolveTotalIdx(
+  rows: any[][],
+  startIdx: number,
+  totalIdx: number,
+  upperBound: number   // exclusive — first row that belongs to the NEXT section
+): number {
+  if (totalIdx >= 0 && totalIdx > startIdx) return totalIdx; // already valid
+
+  let lastDataRow = startIdx - 1;
+  const limit = Math.min(upperBound, rows.length);
+  for (let i = startIdx; i < limit; i++) {
+    const r = rows[i] || [];
+    const hasContent = String(r[1] || '').trim() || String(r[5] || '').trim();
+    if (hasContent) lastDataRow = i;
+  }
+  // Place total right after last data row (or at startIdx+1 if section is empty)
+  return Math.max(lastDataRow + 1, startIdx + 1);
+}
+
 
 export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: string, apiKey: string): Promise<boolean> {
   const dateParts = (bill.date || '').split('.');
@@ -528,7 +552,14 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   const isSales = bill.billType === 'SALES';
   // Use `let` so both indices can be refreshed after cleanupSectionRows
   let startIdx = isSales ? layout.salesStartIdx : layout.purchStartIdx;
-  let totalIdx = isSales ? layout.salesTotalIdx : layout.purchTotalIdx;
+  let totalIdx = resolveTotalIdx(
+    rows,
+    startIdx >= 0 ? startIdx : 0,
+    isSales ? layout.salesTotalIdx : layout.purchTotalIdx,
+    isSales
+      ? (layout.purchHeaderIdx > 0 ? layout.purchHeaderIdx : rows.length)
+      : (layout.payTaxIdx > 0 ? layout.payTaxIdx : rows.length)
+  );
 
   const deletedCount = await cleanupSectionRows(newSheetId, sheetName, startIdx, totalIdx, sheetsId, saJson, apiKey);
   if (deletedCount > 0) {
@@ -537,15 +568,20 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
     layout = parseSheetLayout(rows);
     // Refresh BOTH indices — only totalIdx was refreshed before, leaving startIdx stale
     startIdx = isSales ? layout.salesStartIdx : layout.purchStartIdx;
-    totalIdx = isSales ? layout.salesTotalIdx : layout.purchTotalIdx;
+    totalIdx = resolveTotalIdx(
+      rows,
+      startIdx >= 0 ? startIdx : 0,
+      isSales ? layout.salesTotalIdx : layout.purchTotalIdx,
+      isSales
+        ? (layout.purchHeaderIdx > 0 ? layout.purchHeaderIdx : rows.length)
+        : (layout.payTaxIdx > 0 ? layout.payTaxIdx : rows.length)
+    );
   }
 
-  // Guard: if layout detection failed, bail out with a clear error instead of
-  // writing data to a garbage row (outside the table).
-  // Use `< 0` not `=== -1` so any negative value is caught.
-  if (startIdx < 0 || totalIdx < 0 || totalIdx <= startIdx) {
+  // Final safety: if section start itself is not found, bail out
+  if (startIdx < 0 || totalIdx <= startIdx) {
     throw new Error(
-      `Could not detect the ${isSales ? 'sales' : 'purchase'} section boundaries in sheet "${sheetName}". ` +
+      `Could not locate the ${isSales ? 'sales' : 'purchase'} section in sheet "${sheetName}". ` +
       `The sheet structure may be corrupted. Please re-open the sheet and try again.`
     );
   }
@@ -629,7 +665,15 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   const postInsertRows = postInsertRes.values || [];
   const postInsertLayout = parseSheetLayout(postInsertRows);
   const postInsertStartIdx = isSales ? postInsertLayout.salesStartIdx : postInsertLayout.purchStartIdx;
-  const postInsertTotalIdx = isSales ? postInsertLayout.salesTotalIdx : postInsertLayout.purchTotalIdx;
+  // Resolve totalIdx here too — the SUM formula may still be absent after insert
+  const postInsertTotalIdx = resolveTotalIdx(
+    postInsertRows,
+    postInsertStartIdx >= 0 ? postInsertStartIdx : 0,
+    isSales ? postInsertLayout.salesTotalIdx : postInsertLayout.purchTotalIdx,
+    isSales
+      ? (postInsertLayout.purchHeaderIdx > 0 ? postInsertLayout.purchHeaderIdx : postInsertRows.length)
+      : (postInsertLayout.payTaxIdx > 0 ? postInsertLayout.payTaxIdx : postInsertRows.length)
+  );
 
   await sortAndResequenceSection(sheetName, postInsertStartIdx, postInsertTotalIdx, sheetsId, saJson, apiKey);
 
@@ -655,10 +699,18 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
     }, sheetsId, saJson, apiKey);
   }
 
-  if (finalLayout.purchStartIdx !== -1 && finalLayout.purchTotalIdx !== -1) {
+  // Resolve final purchase total — writes SUM formula even if it was previously missing
+  const finalPurchTotalIdx = resolveTotalIdx(
+    finalRows,
+    finalLayout.purchStartIdx >= 0 ? finalLayout.purchStartIdx : 0,
+    finalLayout.purchTotalIdx,
+    finalLayout.payTaxIdx > 0 ? finalLayout.payTaxIdx : finalRows.length
+  );
+
+  if (finalLayout.purchStartIdx !== -1 && finalPurchTotalIdx > finalLayout.purchStartIdx) {
     const startRow = finalLayout.purchStartIdx + 1;
-    const endRow = finalLayout.purchTotalIdx;
-    const purchTotalRange = `${sheetName}!E${finalLayout.purchTotalIdx + 1}:J${finalLayout.purchTotalIdx + 1}`;
+    const endRow = finalPurchTotalIdx;   // 0-indexed → 1-indexed last-data-row
+    const purchTotalRange = `${sheetName}!E${finalPurchTotalIdx + 1}:J${finalPurchTotalIdx + 1}`;
     const purchTotalFormulas = [
       `=SUM(E${startRow}:E${endRow})`,
       `=SUM(F${startRow}:F${endRow})`,
@@ -679,7 +731,10 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
     const cgstRow = payTaxHeaderIdx + 6;
     const sgstRow = payTaxHeaderIdx + 7;
     const cessRow = payTaxHeaderIdx + 8;
-    const purchTotalRowStr = (finalLayout.purchStartIdx !== -1 && finalLayout.purchTotalIdx !== -1) ? `${finalLayout.purchTotalIdx + 1}` : `14`;
+    const purchTotalRowStr = (finalLayout.purchStartIdx !== -1 && finalPurchTotalIdx > finalLayout.purchStartIdx)
+      ? `${finalPurchTotalIdx + 1}`
+      : `14`;
+
 
     const paymentTableValues = [
       ['', '', '', '', `=SUM(C${payTaxHeaderIdx + 3}:F${payTaxHeaderIdx + 3})`],
