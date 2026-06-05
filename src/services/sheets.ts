@@ -446,7 +446,12 @@ export async function sortAndResequenceSection(
     return;
   }
 
+  // Sort: group by company name first (so all bills for the same vendor are together),
+  // then sort by date within each company group.
   cleanDataRows.sort((a: any, b: any) => {
+    const companyA = String(a[1] || '').trim().toLowerCase();
+    const companyB = String(b[1] || '').trim().toLowerCase();
+    if (companyA !== companyB) return companyA.localeCompare(companyB);
     const timeA = parseDateString(String(a[3] || ''));
     const timeB = parseDateString(String(b[3] || ''));
     return timeA - timeB;
@@ -521,7 +526,8 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
 
   let layout = parseSheetLayout(rows);
   const isSales = bill.billType === 'SALES';
-  const startIdx = isSales ? layout.salesStartIdx : layout.purchStartIdx;
+  // Use `let` so both indices can be refreshed after cleanupSectionRows
+  let startIdx = isSales ? layout.salesStartIdx : layout.purchStartIdx;
   let totalIdx = isSales ? layout.salesTotalIdx : layout.purchTotalIdx;
 
   const deletedCount = await cleanupSectionRows(newSheetId, sheetName, startIdx, totalIdx, sheetsId, saJson, apiKey);
@@ -529,7 +535,18 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
     valRes = await apiCall(`/values/${encodeURIComponent(sheetName)}!A1:K300?valueRenderOption=FORMULA`, {}, sheetsId, saJson, apiKey);
     rows = valRes.values || [];
     layout = parseSheetLayout(rows);
+    // Refresh BOTH indices — only totalIdx was refreshed before, leaving startIdx stale
+    startIdx = isSales ? layout.salesStartIdx : layout.purchStartIdx;
     totalIdx = isSales ? layout.salesTotalIdx : layout.purchTotalIdx;
+  }
+
+  // Guard: if layout detection failed, bail out with a clear error instead of
+  // writing data to a garbage row (row 0 / outside the table)
+  if (startIdx === -1 || totalIdx === -1) {
+    throw new Error(
+      `Could not detect the ${isSales ? 'sales' : 'purchase'} section boundaries in sheet "${sheetName}". ` +
+      `The sheet structure may be corrupted. Please check the Google Sheet and try again.`
+    );
   }
 
   const colJwr = bill.jwrAmount > 0 ? bill.jwrAmount : "";
@@ -558,23 +575,15 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   const isPlaceholderEmpty = !firstRow[1] && !firstRow[2];
 
   if (isPlaceholderEmpty) {
+    // Replace the empty placeholder row in-place (no insertDimension needed)
     targetInsertIdx = startIdx;
     srNo = 1;
   } else {
-    targetInsertIdx = totalIdx; // Default to end of section
-    const newBillTime = parseDateString(bill.date);
-    
-    for (let i = startIdx; i < totalIdx; i++) {
-      const row = rows[i] || [];
-      const rowDateStr = String(row[3] || '').trim();
-      const rowTime = parseDateString(rowDateStr);
-      
-      if (rowTime > 0 && newBillTime < rowTime) {
-        targetInsertIdx = i;
-        break;
-      }
-    }
-    srNo = (targetInsertIdx - startIdx) + 1;
+    // Always append at the end of the section — sortAndResequenceSection will
+    // re-order everything by company name + date immediately after this write,
+    // so the pre-insert position doesn't need to be calculated by date.
+    targetInsertIdx = totalIdx;
+    srNo = (totalIdx - startIdx) + 1;
   }
 
   rowData[0] = isSales
