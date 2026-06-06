@@ -801,8 +801,11 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
  * Completely wipes the scrambled month tab and rebuilds it from scratch
  * using only the bills stored in the local IndexedDB for that month/year.
  *
- * Progress is reported via the onProgress callback so the UI can display
- * a live status message.
+ * Uses a BATCH write strategy: all rows for each section are inserted and
+ * written in a single API call instead of one call per bill. This keeps the
+ * total number of Sheets API calls to ~12 regardless of how many bills exist,
+ * avoiding the 429 "Quota exceeded" rate-limit errors that the previous
+ * per-bill approach caused (37 bills × ~8 calls = ~300 calls >> 60/min limit).
  *
  * @param monthYear  e.g. "May 2026"
  * @param allBills   All bills from local DB (we filter to the target month)
@@ -810,7 +813,7 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
  * @param saJson     Service account JSON string
  * @param apiKey     Fallback API key
  * @param onProgress Optional callback for progress updates
- * @returns Number of bills re-synced
+ * @returns Number of bills restored
  */
 export async function repairAndRebuildSheet(
   monthYear: string,
@@ -822,12 +825,11 @@ export async function repairAndRebuildSheet(
 ): Promise<number> {
   const report = (msg: string) => { onProgress?.(msg); console.log('[Repair]', msg); };
 
-  // Parse month/year from tab name
+  // ── Parse & filter ──────────────────────────────────────────────────────
   const [monthName, year] = monthYear.split(' ');
   const monthIdx = MONTHS.indexOf(monthName);
   if (monthIdx === -1 || !year) throw new Error(`Invalid month tab name: "${monthYear}"`);
 
-  // Filter local bills to this month + year
   const billsForMonth = allBills.filter(b => {
     const parts = (b.date || '').split('.');
     if (parts.length !== 3) return false;
@@ -837,50 +839,212 @@ export async function repairAndRebuildSheet(
 
   report(`Found ${billsForMonth.length} local bill(s) for ${monthYear}.`);
 
-  // Step 1: Get the sheet ID (create tab if it doesn't exist yet)
+  // ── Get / create the tab ────────────────────────────────────────────────
+  report('Checking sheet tab…');
   const metadata = await apiCall('?fields=sheets.properties.title,sheets.properties.sheetId', {}, sheetsId, saJson, apiKey);
   const existingTab = metadata.sheets.find((s: any) => s.properties.title.toLowerCase() === monthYear.toLowerCase());
 
+  let tabSheetId: number;
   if (existingTab) {
     report(`Clearing scrambled tab "${monthYear}"…`);
-    // Clear the entire sheet content so writeSkeleton starts from scratch
     await apiCall(`/values/${encodeURIComponent(monthYear)}!A1:K500:clear`, { method: 'POST' }, sheetsId, saJson, apiKey);
+    tabSheetId = existingTab.properties.sheetId;
+  } else {
+    const addResult = await apiCall(':batchUpdate', {
+      method: 'POST',
+      body: JSON.stringify({ requests: [{ addSheet: { properties: { title: monthYear } } }] })
+    }, sheetsId, saJson, apiKey);
+    tabSheetId = addResult.replies[0].addSheet.properties.sheetId;
   }
 
-  // Step 2: Write a fresh, clean skeleton
-  report(`Writing fresh skeleton for "${monthYear}"…`);
-  // Pick any bill date in the month to derive the skeleton header, or synthesise one
+  // ── Write fresh skeleton ────────────────────────────────────────────────
+  report('Writing fresh skeleton…');
   const sampleDate = billsForMonth.length > 0
     ? billsForMonth[0].date
     : `01.${String(monthIdx + 1).padStart(2, '0')}.${year}`;
   await writeSkeleton(monthYear, sampleDate, sheetsId, saJson, apiKey);
 
   if (billsForMonth.length === 0) {
-    report('No local bills found for this month. Skeleton written with empty placeholders.');
+    report('No local bills found. Skeleton written with empty placeholders.');
     return 0;
   }
 
-  // Step 3: Re-insert each bill one by one using the standard appendBillToSheets
-  // Sort: SALES first, then PURCHASE, each group sorted by date ascending
-  const sorted = [...billsForMonth].sort((a, b) => {
-    if (a.billType !== b.billType) return a.billType === 'SALES' ? -1 : 1;
-    return parseDateString(a.date) - parseDateString(b.date);
-  });
+  // ── Sort: SALES by date; PURCHASE by company then date ──────────────────
+  const salesBills = billsForMonth
+    .filter(b => b.billType === 'SALES')
+    .sort((a, b) => parseDateString(a.date) - parseDateString(b.date));
 
-  let synced = 0;
-  for (const bill of sorted) {
-    try {
-      report(`Syncing [${bill.billType}] ${bill.company} — ₹${bill.totalAmount.toLocaleString('en-IN')}…`);
-      await appendBillToSheets(bill, sheetsId, saJson, apiKey);
-      synced++;
-    } catch (err: any) {
-      console.error(`[Repair] Failed to sync bill for ${bill.company}:`, err);
-      report(`⚠ Skipped ${bill.company}: ${err.message}`);
+  const purchBills = billsForMonth
+    .filter(b => b.billType === 'PURCHASE')
+    .sort((a, b) => {
+      const ca = a.company.trim().toLowerCase();
+      const cb = b.company.trim().toLowerCase();
+      if (ca !== cb) return ca.localeCompare(cb);
+      return parseDateString(a.date) - parseDateString(b.date);
+    });
+
+  const N = salesBills.length;
+  const M = purchBills.length;
+
+  report(`Batch-writing ${N} sales + ${M} purchase bills…`);
+
+  // ── Deterministic skeleton row indices (0-based) ─────────────────────────
+  // writeSkeleton always produces the same fixed layout:
+  const SK_SALES_START = 7;   // row 8  – placeholder / first data row
+  const SK_SALES_TOTAL = 8;   // row 9  – SUM formula row
+  const SK_PURCH_START = 14;  // row 15 – placeholder / first data row
+  const SK_PURCH_TOTAL = 15;  // row 16 – SUM formula row
+  const SK_PAY_TAX     = 18;  // row 19 – "Payment of Tax" label
+
+  // ── SALES section ────────────────────────────────────────────────────────
+  // Skeleton has 1 placeholder at SK_SALES_START.
+  // Need N-1 extra rows inserted before SUM row to accommodate N bills.
+  let finalSalesTotal: number;
+
+  if (N === 0) {
+    finalSalesTotal = SK_SALES_TOTAL;
+  } else {
+    if (N > 1) {
+      // Insert all N-1 extra rows in ONE batchUpdate (not N individual calls)
+      const insertReqs = Array.from({ length: N - 1 }, () => ({
+        insertDimension: {
+          range: { sheetId: tabSheetId, dimension: 'ROWS', startIndex: SK_SALES_TOTAL, endIndex: SK_SALES_TOTAL + 1 },
+          inheritFromBefore: true
+        }
+      }));
+      await apiCall(':batchUpdate', { method: 'POST', body: JSON.stringify({ requests: insertReqs }) }, sheetsId, saJson, apiKey);
     }
+    finalSalesTotal = SK_SALES_START + N;
+
+    // Write all N sales rows in ONE PUT call
+    const salesRows = salesBills.map((bill, i) => [
+      bill.invoiceNumber?.trim() ? bill.invoiceNumber.trim() : (i + 1),
+      bill.company, bill.gstin, bill.date,
+      bill.jwrAmount > 0 ? bill.jwrAmount : '',
+      bill.netAmount,
+      bill.igstAmount > 0 ? bill.igstAmount : '',
+      bill.cgstAmount > 0 ? bill.cgstAmount : '',
+      bill.sgstAmount > 0 ? bill.sgstAmount : '',
+      bill.totalAmount, ''
+    ]);
+    const salesRange = `${monthYear}!A${SK_SALES_START + 1}:K${SK_SALES_START + N}`;
+    await apiCall(`/values/${encodeURIComponent(salesRange)}?valueInputOption=USER_ENTERED`, {
+      method: 'PUT', body: JSON.stringify({ values: salesRows })
+    }, sheetsId, saJson, apiKey);
   }
 
-  report(`✓ Repair complete. ${synced}/${billsForMonth.length} bills restored.`);
-  return synced;
+  // ── PURCHASE section ─────────────────────────────────────────────────────
+  // All rows below sales shifted by salesShift = max(0, N-1)
+  const salesShift       = N > 0 ? N - 1 : 0;
+  const shiftedPurchStart = SK_PURCH_START + salesShift;
+  const shiftedPurchTotal = SK_PURCH_TOTAL + salesShift;
+  const shiftedPayTax     = SK_PAY_TAX     + salesShift;
+
+  let finalPurchTotal: number;
+
+  if (M === 0) {
+    finalPurchTotal = shiftedPurchTotal;
+  } else {
+    if (M > 1) {
+      const insertReqs = Array.from({ length: M - 1 }, () => ({
+        insertDimension: {
+          range: { sheetId: tabSheetId, dimension: 'ROWS', startIndex: shiftedPurchTotal, endIndex: shiftedPurchTotal + 1 },
+          inheritFromBefore: true
+        }
+      }));
+      await apiCall(':batchUpdate', { method: 'POST', body: JSON.stringify({ requests: insertReqs }) }, sheetsId, saJson, apiKey);
+    }
+    finalPurchTotal = shiftedPurchStart + M;
+
+    const purchRows = purchBills.map((bill, i) => [
+      i + 1,
+      bill.company, bill.gstin, bill.date,
+      bill.jwrAmount > 0 ? bill.jwrAmount : '',
+      bill.netAmount,
+      bill.igstAmount > 0 ? bill.igstAmount : '',
+      bill.cgstAmount > 0 ? bill.cgstAmount : '',
+      bill.sgstAmount > 0 ? bill.sgstAmount : '',
+      bill.totalAmount, ''
+    ]);
+    const purchRange = `${monthYear}!A${shiftedPurchStart + 1}:K${shiftedPurchStart + M}`;
+    await apiCall(`/values/${encodeURIComponent(purchRange)}?valueInputOption=USER_ENTERED`, {
+      method: 'PUT', body: JSON.stringify({ values: purchRows })
+    }, sheetsId, saJson, apiKey);
+  }
+
+  const finalPayTax = shiftedPayTax + (M > 0 ? M - 1 : 0);
+
+  // ── SUM formulas ─────────────────────────────────────────────────────────
+  report('Writing SUM formulas…');
+
+  // Sales SUM row
+  const salesDataStart1 = SK_SALES_START + 1;   // 1-indexed first data row
+  const salesDataEnd1   = finalSalesTotal;       // 1-indexed last data row (= 0-based SUM idx)
+  const salesTotalRow1  = finalSalesTotal + 1;   // 1-indexed SUM row
+  await apiCall(`/values/${encodeURIComponent(monthYear)}!E${salesTotalRow1}:J${salesTotalRow1}?valueInputOption=USER_ENTERED`, {
+    method: 'PUT', body: JSON.stringify({ values: [[
+      `=SUM(E${salesDataStart1}:E${salesDataEnd1})`,
+      `=SUM(F${salesDataStart1}:F${salesDataEnd1})`,
+      `=SUM(G${salesDataStart1}:G${salesDataEnd1})`,
+      `=SUM(H${salesDataStart1}:H${salesDataEnd1})`,
+      `=SUM(I${salesDataStart1}:I${salesDataEnd1})`,
+      `=SUM(J${salesDataStart1}:J${salesDataEnd1})`,
+    ]] })
+  }, sheetsId, saJson, apiKey);
+
+  // Purchase SUM row
+  const purchDataStart1 = shiftedPurchStart + 1;
+  const purchDataEnd1   = finalPurchTotal;
+  const purchTotalRow1  = finalPurchTotal + 1;
+  await apiCall(`/values/${encodeURIComponent(monthYear)}!E${purchTotalRow1}:J${purchTotalRow1}?valueInputOption=USER_ENTERED`, {
+    method: 'PUT', body: JSON.stringify({ values: [[
+      `=SUM(E${purchDataStart1}:E${purchDataEnd1})`,
+      `=SUM(F${purchDataStart1}:F${purchDataEnd1})`,
+      `=SUM(G${purchDataStart1}:G${purchDataEnd1})`,
+      `=SUM(H${purchDataStart1}:H${purchDataEnd1})`,
+      `=SUM(I${purchDataStart1}:I${purchDataEnd1})`,
+      `=SUM(J${purchDataStart1}:J${purchDataEnd1})`,
+    ]] })
+  }, sheetsId, saJson, apiKey);
+
+  // ── Payment of Tax table ─────────────────────────────────────────────────
+  report('Writing Payment of Tax formulas…');
+  const payTaxIdx0 = finalPayTax;
+  const igstRow = payTaxIdx0 + 5;
+  const cgstRow = payTaxIdx0 + 6;
+  const sgstRow = payTaxIdx0 + 7;
+  const cessRow = payTaxIdx0 + 8;
+
+  await apiCall(`/values/${encodeURIComponent(monthYear)}!C${payTaxIdx0 + 2}:G${payTaxIdx0 + 10}?valueInputOption=USER_ENTERED`, {
+    method: 'PUT', body: JSON.stringify({ values: [
+      ['', '', '', '', `=SUM(C${payTaxIdx0 + 3}:F${payTaxIdx0 + 3})`],
+      ['Tax payable', 'IGST', 'CGST', 'SGST', 'Tax Payable'],
+      ['', '', '', '', ''],
+      [`=+G${salesTotalRow1}`, `=+G${purchTotalRow1}`, 0, 0, `=C${igstRow}-D${igstRow}-E${igstRow}-F${igstRow}`],
+      [`=+H${salesTotalRow1}`, '', `=+H${purchTotalRow1}`, '', `=C${cgstRow}-E${cgstRow}`],
+      [`=+I${salesTotalRow1}`, '', '', `=+I${purchTotalRow1}`, `=C${sgstRow}-F${sgstRow}`],
+      [0, '', '', 0, `=C${cessRow}-F${cessRow}`],
+      ['', '', '', '', ''],
+      [
+        `=SUM(C${igstRow}:C${cessRow})`, `=SUM(D${igstRow}:D${cessRow})`,
+        `=SUM(E${igstRow}:E${cessRow})`, `=SUM(F${igstRow}:F${cessRow})`,
+        `=SUM(G${igstRow}:G${cessRow})`
+      ]
+    ] })
+  }, sheetsId, saJson, apiKey);
+
+  // ── Formatting ───────────────────────────────────────────────────────────
+  report('Applying formatting…');
+  try {
+    await applySheetsFormatting(tabSheetId, monthYear, sheetsId, saJson, apiKey);
+  } catch (err) {
+    console.error('[Repair] Formatting failed (non-critical):', err);
+    report('⚠ Formatting skipped (non-critical).');
+  }
+
+  const total = N + M;
+  report(`✓ Repair complete. ${total}/${billsForMonth.length} bills restored.`);
+  return total;
 }
 
 export async function deleteBillFromSheets(bill: Bill, sheetsId: string, saJson: string, apiKey: string): Promise<boolean> {
