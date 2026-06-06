@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AppSettings, Bill } from '../../types';
 import { db } from '../../database/db';
 import { testGeminiConnection } from '../../services/gemini';
-import { testSheetsConnection } from '../../services/sheets';
+import { testSheetsConnection, repairAndRebuildSheet } from '../../services/sheets';
 
 interface SettingsProps {
   settings: AppSettings;
@@ -20,6 +20,24 @@ export const Settings: React.FC<SettingsProps> = ({ settings, saveSettings, show
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showSheetsKey, setShowSheetsKey] = useState(false);
   const saFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Repair state
+  const [showRepairModal, setShowRepairModal] = useState(false);
+  const [repairMonth, setRepairMonth] = useState('');
+  const [isRepairing, setIsRepairing] = useState(false);
+  const [repairLog, setRepairLog] = useState<string[]>([]);
+
+  // Build list of available month options (current + previous 11 months)
+  const monthOptions = (() => {
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const opts: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      opts.push(`${MONTHS[d.getMonth()]} ${d.getFullYear()}`);
+    }
+    return opts;
+  })();
 
   useEffect(() => {
     setGeminiKey(settings.geminiApiKey);
@@ -65,6 +83,41 @@ export const Settings: React.FC<SettingsProps> = ({ settings, saveSettings, show
     if (!window.confirm('Wipe ALL local billing records? This cannot be undone.')) return;
     try { await db.wipeAllBills(); showToast('Database wiped.', 'success'); setTimeout(() => location.reload(), 800); }
     catch { showToast('Wipe failed.', 'error'); }
+  };
+
+  const handleRepairSheet = async () => {
+    if (!repairMonth) { showToast('Select a month to repair.', 'error'); return; }
+    if (!settings.sheetsId) { showToast('Google Sheets ID is not configured.', 'error'); return; }
+    setIsRepairing(true);
+    setRepairLog([`Starting repair for "${repairMonth}"…`]);
+    try {
+      const allBills = await db.getAllBills();
+      const count = await repairAndRebuildSheet(
+        repairMonth,
+        allBills,
+        settings.sheetsId,
+        settings.serviceAccountJson,
+        settings.sheetsApiKey || settings.geminiApiKey,
+        (msg) => setRepairLog(prev => [...prev, msg])
+      );
+      // Mark all repaired bills as synced in local DB
+      for (const b of allBills) {
+        if (!b.syncedToSheets) {
+          const parts = (b.date || '').split('.');
+          const MONTHS_ARR = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          const bMonthYear = parts.length === 3
+            ? `${MONTHS_ARR[parseInt(parts[1]) - 1]} ${parts[2]}`
+            : '';
+          if (bMonthYear === repairMonth) await db.markBillSynced(b.id!);
+        }
+      }
+      showToast(`Sheet repaired! ${count} bill(s) restored.`, 'success');
+    } catch (err: any) {
+      setRepairLog(prev => [...prev, `❌ Error: ${err.message}`]);
+      showToast('Repair failed: ' + err.message, 'error');
+    } finally {
+      setIsRepairing(false);
+    }
   };
 
   const handleLoadDemo = async () => {
@@ -362,6 +415,48 @@ export const Settings: React.FC<SettingsProps> = ({ settings, saveSettings, show
               </button>
             </div>
           </div>
+
+          {/* Sheet Repair */}
+          <div className="cs-card" style={{ padding: 24, border: '1px solid rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.04)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(245,158,11,0.12)', border: '1px solid var(--gold-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="material-symbols-rounded" style={{ fontSize: 14, color: 'var(--gold)', fontVariationSettings: "'FILL' 1" }}>build_circle</span>
+              </div>
+              <div>
+                <p className="text-headline" style={{ fontSize: 13 }}>Repair Scrambled Sheet</p>
+                <p className="text-label" style={{ marginTop: 2, fontSize: 10 }}>Rebuild a month tab from local data</p>
+              </div>
+            </div>
+            <div className="gold-line" style={{ marginBottom: 16 }} />
+            <p style={{ fontFamily: 'Space Grotesk', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 14 }}>
+              If a sheet tab was scrambled by an upload, use this to <strong style={{ color: 'var(--text-primary)' }}>wipe and fully rebuild</strong> it from your locally-saved bills. All data saved in this app is safe.
+            </p>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <select
+                  className="cs-input"
+                  style={{ appearance: 'none', cursor: 'pointer', paddingRight: 36, fontSize: 11 }}
+                  value={repairMonth}
+                  onChange={e => setRepairMonth(e.target.value)}
+                >
+                  <option value="" style={{ background: 'var(--navy-2)' }}>Select month to repair…</option>
+                  {monthOptions.map(m => (
+                    <option key={m} value={m} style={{ background: 'var(--navy-2)' }}>{m}</option>
+                  ))}
+                </select>
+                <span className="material-symbols-rounded" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--text-muted)', pointerEvents: 'none' }}>expand_more</span>
+              </div>
+              <button
+                className="cs-btn-primary"
+                style={{ padding: '10px 18px', fontSize: 11, flexShrink: 0 }}
+                onClick={() => { setRepairLog([]); setShowRepairModal(true); }}
+                disabled={!repairMonth}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 15, fontVariationSettings: "'FILL' 1" }}>build</span>
+                Repair Sheet
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -372,6 +467,68 @@ export const Settings: React.FC<SettingsProps> = ({ settings, saveSettings, show
           Save Configuration
         </button>
       </div>
+
+      {/* ── Repair Modal ───────────────────────────────────────────────────── */}
+      {showRepairModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(16px)' }}>
+          <div className="anim-scale-in cs-card" style={{ maxWidth: 560, width: '100%', padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(245,158,11,0.12)', border: '1px solid var(--gold-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span className="material-symbols-rounded" style={{ fontSize: 22, color: 'var(--gold)', fontVariationSettings: "'FILL' 1", animation: isRepairing ? 'pulse-amber 0.8s infinite' : undefined }}>build_circle</span>
+              </div>
+              <div>
+                <p style={{ fontFamily: 'Sora', fontWeight: 800, fontSize: 16, color: 'var(--text-primary)' }}>Repair — {repairMonth}</p>
+                <p className="text-label" style={{ marginTop: 3 }}>{isRepairing ? 'Rebuilding sheet from local database…' : repairLog.length === 0 ? 'Ready to start' : 'Repair finished'}</p>
+              </div>
+            </div>
+
+            <div className="gold-line" />
+
+            {/* Warning */}
+            {!isRepairing && repairLog.length === 0 && (
+              <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(244,63,94,0.07)', border: '1px solid rgba(244,63,94,0.2)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <span className="material-symbols-rounded" style={{ fontSize: 16, color: '#fb7185', flexShrink: 0, fontVariationSettings: "'FILL' 1" }}>warning</span>
+                <p style={{ fontFamily: 'Space Grotesk', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+                  This will <strong style={{ color: '#fb7185' }}>wipe the entire "{repairMonth}" tab</strong> in Google Sheets and rebuild it from your local bill records. Your local data is never deleted.
+                </p>
+              </div>
+            )}
+
+            {/* Live log */}
+            {repairLog.length > 0 && (
+              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', borderRadius: 12, padding: '14px 16px', maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {repairLog.map((line, i) => (
+                  <p key={i} style={{ fontFamily: 'Space Mono', fontSize: 10, color: line.startsWith('✓') ? '#34d399' : line.startsWith('⚠') ? '#fbbf24' : line.startsWith('❌') ? '#fb7185' : 'var(--text-muted)', lineHeight: 1.6 }}>{line}</p>
+                ))}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                className="cs-btn-ghost"
+                style={{ flex: 1 }}
+                onClick={() => { if (!isRepairing) { setShowRepairModal(false); setRepairLog([]); } }}
+                disabled={isRepairing}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 16 }}>close</span>
+                {repairLog.some(l => l.startsWith('✓')) ? 'Close' : 'Cancel'}
+              </button>
+              {(!isRepairing && !repairLog.some(l => l.startsWith('✓'))) && (
+                <button
+                  className="cs-btn-primary"
+                  style={{ flex: 1 }}
+                  onClick={handleRepairSheet}
+                >
+                  <span className="material-symbols-rounded" style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}>build</span>
+                  Start Repair
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <input type="file" accept=".json" ref={saFileInputRef} onChange={e => {
         const f = e.target.files?.[0]; if (!f) return;

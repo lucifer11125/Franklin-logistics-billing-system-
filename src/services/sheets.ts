@@ -539,9 +539,22 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   let valRes = await apiCall(`/values/${encodeURIComponent(sheetName)}!A1:K300?valueRenderOption=FORMULA`, {}, sheetsId, saJson, apiKey);
   let rows = valRes.values || [];
 
-  // Accept both legacy 'SR NO' and new 'INVOICE NO' headers so existing sheets don't get rewritten
-  const row5Col0 = rows[5] ? String(rows[5][0] || '').trim().toUpperCase() : '';
-  const skeletonIsValid = rows.length >= 6 && (row5Col0 === 'SR NO' || row5Col0 === 'INVOICE NO');
+  // Scan the raw rows directly for section-header keywords.
+  // parseSheetLayout cannot be used here because it applies fallback hardcoded
+  // indices when a section is not found, so its output never contains -1 — we
+  // would always see a "valid" layout even on a completely blank sheet.
+  // Only write the skeleton when the sheet is genuinely empty / unrecognisable
+  // — NEVER when the sections already exist, because writeSkeleton does a full
+  // PUT on A1:K28 that would overwrite all existing bill rows.
+  let hasSalesSection = false;
+  let hasPurchSection = false;
+  for (const r of rows) {
+    const rowStr = (r || []).map((v: any) => String(v)).join(' ').toLowerCase();
+    if (rowStr.includes('sales invoices') || rowStr.includes('outgoing bills')) hasSalesSection = true;
+    if (rowStr.includes('purchase invoices') || rowStr.includes('incoming bills')) hasPurchSection = true;
+    if (hasSalesSection && hasPurchSection) break;
+  }
+  const skeletonIsValid = hasSalesSection && hasPurchSection;
   if (!skeletonIsValid) {
     await writeSkeleton(sheetName, bill.date, sheetsId, saJson, apiKey);
     const reValRes = await apiCall(`/values/${encodeURIComponent(sheetName)}!A1:K300?valueRenderOption=FORMULA`, {}, sheetsId, saJson, apiKey);
@@ -768,6 +781,94 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
   }
 
   return true;
+}
+
+/* ── Sheet Repair: wipe & rebuild from local DB ────────────────────────── */
+
+/**
+ * Completely wipes the scrambled month tab and rebuilds it from scratch
+ * using only the bills stored in the local IndexedDB for that month/year.
+ *
+ * Progress is reported via the onProgress callback so the UI can display
+ * a live status message.
+ *
+ * @param monthYear  e.g. "May 2026"
+ * @param allBills   All bills from local DB (we filter to the target month)
+ * @param sheetsId   Google Sheets spreadsheet ID
+ * @param saJson     Service account JSON string
+ * @param apiKey     Fallback API key
+ * @param onProgress Optional callback for progress updates
+ * @returns Number of bills re-synced
+ */
+export async function repairAndRebuildSheet(
+  monthYear: string,
+  allBills: Bill[],
+  sheetsId: string,
+  saJson: string,
+  apiKey: string,
+  onProgress?: (msg: string) => void
+): Promise<number> {
+  const report = (msg: string) => { onProgress?.(msg); console.log('[Repair]', msg); };
+
+  // Parse month/year from tab name
+  const [monthName, year] = monthYear.split(' ');
+  const monthIdx = MONTHS.indexOf(monthName);
+  if (monthIdx === -1 || !year) throw new Error(`Invalid month tab name: "${monthYear}"`);
+
+  // Filter local bills to this month + year
+  const billsForMonth = allBills.filter(b => {
+    const parts = (b.date || '').split('.');
+    if (parts.length !== 3) return false;
+    const bMonth = MONTHS[parseInt(parts[1]) - 1];
+    return bMonth === monthName && parts[2] === year;
+  });
+
+  report(`Found ${billsForMonth.length} local bill(s) for ${monthYear}.`);
+
+  // Step 1: Get the sheet ID (create tab if it doesn't exist yet)
+  const metadata = await apiCall('?fields=sheets.properties.title,sheets.properties.sheetId', {}, sheetsId, saJson, apiKey);
+  const existingTab = metadata.sheets.find((s: any) => s.properties.title.toLowerCase() === monthYear.toLowerCase());
+
+  if (existingTab) {
+    report(`Clearing scrambled tab "${monthYear}"…`);
+    // Clear the entire sheet content so writeSkeleton starts from scratch
+    await apiCall(`/values/${encodeURIComponent(monthYear)}!A1:K500:clear`, { method: 'POST' }, sheetsId, saJson, apiKey);
+  }
+
+  // Step 2: Write a fresh, clean skeleton
+  report(`Writing fresh skeleton for "${monthYear}"…`);
+  // Pick any bill date in the month to derive the skeleton header, or synthesise one
+  const sampleDate = billsForMonth.length > 0
+    ? billsForMonth[0].date
+    : `01.${String(monthIdx + 1).padStart(2, '0')}.${year}`;
+  await writeSkeleton(monthYear, sampleDate, sheetsId, saJson, apiKey);
+
+  if (billsForMonth.length === 0) {
+    report('No local bills found for this month. Skeleton written with empty placeholders.');
+    return 0;
+  }
+
+  // Step 3: Re-insert each bill one by one using the standard appendBillToSheets
+  // Sort: SALES first, then PURCHASE, each group sorted by date ascending
+  const sorted = [...billsForMonth].sort((a, b) => {
+    if (a.billType !== b.billType) return a.billType === 'SALES' ? -1 : 1;
+    return parseDateString(a.date) - parseDateString(b.date);
+  });
+
+  let synced = 0;
+  for (const bill of sorted) {
+    try {
+      report(`Syncing [${bill.billType}] ${bill.company} — ₹${bill.totalAmount.toLocaleString('en-IN')}…`);
+      await appendBillToSheets(bill, sheetsId, saJson, apiKey);
+      synced++;
+    } catch (err: any) {
+      console.error(`[Repair] Failed to sync bill for ${bill.company}:`, err);
+      report(`⚠ Skipped ${bill.company}: ${err.message}`);
+    }
+  }
+
+  report(`✓ Repair complete. ${synced}/${billsForMonth.length} bills restored.`);
+  return synced;
 }
 
 export async function deleteBillFromSheets(bill: Bill, sheetsId: string, saJson: string, apiKey: string): Promise<boolean> {
