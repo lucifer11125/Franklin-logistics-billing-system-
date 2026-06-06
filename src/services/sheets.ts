@@ -420,7 +420,8 @@ export async function sortAndResequenceSection(
   totalIdx: number,
   sheetsId: string,
   saJson: string,
-  apiKey: string
+  apiKey: string,
+  isSales: boolean = false   // ← NEW: controls sort strategy
 ) {
   if (totalIdx <= startIdx) return;
 
@@ -446,16 +447,26 @@ export async function sortAndResequenceSection(
     return;
   }
 
-  // Sort: group by company name first (so all bills for the same vendor are together),
-  // then sort by date within each company group.
-  cleanDataRows.sort((a: any, b: any) => {
-    const companyA = String(a[1] || '').trim().toLowerCase();
-    const companyB = String(b[1] || '').trim().toLowerCase();
-    if (companyA !== companyB) return companyA.localeCompare(companyB);
-    const timeA = parseDateString(String(a[3] || ''));
-    const timeB = parseDateString(String(b[3] || ''));
-    return timeA - timeB;
-  });
+  if (isSales) {
+    // SALES INVOICES: sort by date only (chronological), so each entry appears
+    // in the order it was issued — not grouped by company.
+    cleanDataRows.sort((a: any, b: any) => {
+      const timeA = parseDateString(String(a[3] || ''));
+      const timeB = parseDateString(String(b[3] || ''));
+      return timeA - timeB;
+    });
+  } else {
+    // PURCHASE INVOICES: group by company name first (all bills for the same
+    // vendor are together), then sort by date within each company group.
+    cleanDataRows.sort((a: any, b: any) => {
+      const companyA = String(a[1] || '').trim().toLowerCase();
+      const companyB = String(b[1] || '').trim().toLowerCase();
+      if (companyA !== companyB) return companyA.localeCompare(companyB);
+      const timeA = parseDateString(String(a[3] || ''));
+      const timeB = parseDateString(String(b[3] || ''));
+      return timeA - timeB;
+    });
+  }
 
   cleanDataRows.forEach((row: any, index: number) => {
     // Preserve non-numeric invoice numbers (e.g. "INV-001", "FL/2025/42")
@@ -471,7 +482,6 @@ export async function sortAndResequenceSection(
     if (row[8] !== undefined && row[8] !== "") row[8] = parseFloat(String(row[8])) || "";
     if (row[9] !== undefined && row[9] !== "") row[9] = parseFloat(String(row[9])) || 0;
   });
-
 
   const writeValues = cleanDataRows.map((row: any) => {
     const fullRow = Array(11).fill("");
@@ -688,7 +698,9 @@ export async function appendBillToSheets(bill: Bill, sheetsId: string, saJson: s
       : (postInsertLayout.payTaxIdx > 0 ? postInsertLayout.payTaxIdx : postInsertRows.length)
   );
 
-  await sortAndResequenceSection(sheetName, postInsertStartIdx, postInsertTotalIdx, sheetsId, saJson, apiKey);
+  // Pass isSales so the correct sort strategy is used:
+  // SALES → date-only (chronological), PURCHASE → company-name then date
+  await sortAndResequenceSection(sheetName, postInsertStartIdx, postInsertTotalIdx, sheetsId, saJson, apiKey, isSales);
 
   const finalRes = await apiCall(`/values/${encodeURIComponent(sheetName)}!A1:K300?valueRenderOption=FORMULA`, {}, sheetsId, saJson, apiKey);
   const finalRows = finalRes.values || [];
